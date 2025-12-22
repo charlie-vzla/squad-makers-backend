@@ -4,6 +4,13 @@ import { MathController } from '../../src/controllers/MathController';
 const mockCalculateLCM = jest.fn();
 const mockIncrementNumber = jest.fn();
 
+jest.mock('../../src/services/MathService', () => ({
+  getInstance: () => ({
+    calculateLCM: mockCalculateLCM,
+    incrementNumber: mockIncrementNumber,
+  }),
+}));
+
 describe('MathController', () => {
   let controller: MathController;
   let mockResponse: Partial<Response>;

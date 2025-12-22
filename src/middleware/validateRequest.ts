@@ -36,3 +36,21 @@ export const validateParams = (schema: z.ZodSchema) => {
     }
   };
 };
+
+export const validateQuery = (schema: z.ZodSchema) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    try {
+      req.query = schema.parse(req.query) as any;
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          message: error.errors[0].message,
+          errors: error.errors,
+        });
+      }
+      next(error);
+    }
+  };
+};
