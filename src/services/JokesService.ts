@@ -126,7 +126,20 @@ export default class JokesService {
     }
   }
 
-  async getJokes(_userName?: string, _topicName?: string): Promise<JokeDTO[]> {
-    return [];
+  /**
+   * Gets jokes filtered by userName and/or topicName.
+   * @param {string} [userName] - Optional user name (already titlecased from validator)
+   * @param {string} [topicName] - Optional topic name (already lowercased from validator)
+   * @returns {Promise<JokeDTO[]>} Array of joke DTOs
+   * @throws {Error} If database operation fails
+   */
+  async getJokes(userName?: string, topicName?: string): Promise<JokeDTO[]> {
+    try {
+      const jokes = await this.repository.getJokes(userName, topicName);
+      return jokes.map((joke) => JokeMapper.toDTO(joke));
+    } catch (error) {
+      logger.error('Error getting jokes:', error);
+      throw error;
+    }
   }
 }

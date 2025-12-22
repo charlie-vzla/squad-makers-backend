@@ -7,6 +7,7 @@ const mockGetChuckNorrisJoke = jest.fn();
 const mockGetDadJoke = jest.fn();
 const mockCreateJoke = jest.fn();
 const mockDeleteJoke = jest.fn();
+const mockGetJokes = jest.fn();
 
 jest.mock('../../src/services/JokesService', () => ({
   __esModule: true,
@@ -18,6 +19,7 @@ jest.mock('../../src/services/JokesService', () => ({
         getDadJoke: mockGetDadJoke,
         createJoke: mockCreateJoke,
         deleteJoke: mockDeleteJoke,
+        getJokes: mockGetJokes,
       };
     }
   },
@@ -229,8 +231,11 @@ describe('JokesController', () => {
         query: {},
       } as unknown as Request;
 
+      mockGetJokes.mockResolvedValueOnce([mockJokeDTO]);
+
       await controller.getJokes(mockRequest, mockResponse as Response);
 
+      expect(mockGetJokes).toHaveBeenCalledWith(undefined, undefined);
       expect(statusMock).toHaveBeenCalledWith(200);
       expect(jsonMock).toHaveBeenCalledWith({
         success: true,
@@ -243,8 +248,11 @@ describe('JokesController', () => {
         query: { userName: 'Manolito' },
       } as unknown as Request;
 
+      mockGetJokes.mockResolvedValueOnce([mockJokeDTO]);
+
       await controller.getJokes(mockRequest, mockResponse as Response);
 
+      expect(mockGetJokes).toHaveBeenCalledWith('Manolito', undefined);
       expect(statusMock).toHaveBeenCalledWith(200);
     });
 
@@ -253,8 +261,11 @@ describe('JokesController', () => {
         query: { topicName: 'humor negro' },
       } as unknown as Request;
 
+      mockGetJokes.mockResolvedValueOnce([mockJokeDTO]);
+
       await controller.getJokes(mockRequest, mockResponse as Response);
 
+      expect(mockGetJokes).toHaveBeenCalledWith(undefined, 'humor negro');
       expect(statusMock).toHaveBeenCalledWith(200);
     });
 
@@ -263,8 +274,11 @@ describe('JokesController', () => {
         query: { userName: 'Manolito', topicName: 'humor negro' },
       } as unknown as Request;
 
+      mockGetJokes.mockResolvedValueOnce([mockJokeDTO]);
+
       await controller.getJokes(mockRequest, mockResponse as Response);
 
+      expect(mockGetJokes).toHaveBeenCalledWith('Manolito', 'humor negro');
       expect(statusMock).toHaveBeenCalledWith(200);
     });
 
@@ -272,6 +286,8 @@ describe('JokesController', () => {
       const mockRequest = {
         query: { userName: 'NonExistent' },
       } as unknown as Request;
+
+      mockGetJokes.mockResolvedValueOnce([]);
 
       await controller.getJokes(mockRequest, mockResponse as Response);
 
@@ -286,11 +302,11 @@ describe('JokesController', () => {
         query: {},
       } as unknown as Request;
 
+      mockGetJokes.mockRejectedValueOnce(new Error('Service error'));
+
       await expect(controller.getJokes(mockRequest, mockResponse as Response)).rejects.toThrow(
         'Service error'
       );
-
-      expect(statusMock).toHaveBeenCalledWith(500);
     });
   });
 });

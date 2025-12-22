@@ -171,26 +171,26 @@ describe('JokesService', () => {
       expect(result[0].id).toBe(mockPrismaJoke.id);
     });
 
-    it('should titlecase userName before querying', async () => {
+    it('should pass userName as-is (already transformed by validator)', async () => {
       mockGetJokes.mockResolvedValueOnce([mockPrismaJoke]);
 
-      await service.getJokes('manolito');
+      await service.getJokes('Manolito');
 
       expect(mockGetJokes).toHaveBeenCalledWith('Manolito', undefined);
     });
 
-    it('should lowercase topicName before querying', async () => {
+    it('should pass topicName as-is (already transformed by validator)', async () => {
       mockGetJokes.mockResolvedValueOnce([mockPrismaJoke]);
 
-      await service.getJokes(undefined, 'HUMOR NEGRO');
+      await service.getJokes(undefined, 'humor negro');
 
       expect(mockGetJokes).toHaveBeenCalledWith(undefined, 'humor negro');
     });
 
-    it('should transform both userName and topicName', async () => {
+    it('should pass both filters through', async () => {
       mockGetJokes.mockResolvedValueOnce([mockPrismaJoke]);
 
-      await service.getJokes('manolito', 'HUMOR NEGRO');
+      await service.getJokes('Manolito', 'humor negro');
 
       expect(mockGetJokes).toHaveBeenCalledWith('Manolito', 'humor negro');
     });

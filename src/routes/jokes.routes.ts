@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { JokesController } from '../controllers/JokesController';
-import { validateRequest, validateParams } from '../middleware/validateRequest';
-import { createJokeSchema, jokeSourceSchema, jokeNumberSchema } from '../validators/jokes.validator';
+import { validateRequest, validateParams, validateQuery } from '../middleware/validateRequest';
+import { createJokeSchema, jokeSourceSchema, jokeNumberSchema, getJokesQuerySchema } from '../validators/jokes.validator';
 
 const router = Router();
 const jokesController = JokesController.getInstance();
@@ -39,6 +39,74 @@ const jokesController = JokesController.getInstance();
  */
 router.get('/', (req, res, next) => {
   jokesController.getRandomJoke(req, res).catch(next);
+});
+
+/**
+ * @swagger
+ * /api/jokes/list:
+ *   get:
+ *     summary: List jokes with optional filters
+ *     description: Returns jokes filtered by userName and/or topicName. If no filters provided, returns all jokes.
+ *     tags: [Jokes]
+ *     parameters:
+ *       - in: query
+ *         name: userName
+ *         schema:
+ *           type: string
+ *         description: Filter by user name (will be titlecased automatically)
+ *         example: "Manolito"
+ *       - in: query
+ *         name: topicName
+ *         schema:
+ *           type: string
+ *         description: Filter by topic name (will be lowercased automatically)
+ *         example: "humor negro"
+ *     responses:
+ *       200:
+ *         description: Jokes retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         format: uuid
+ *                       text:
+ *                         type: string
+ *                       source:
+ *                         type: string
+ *                       number:
+ *                         type: integer
+ *                       user:
+ *                         type: object
+ *                         properties:
+ *                           name:
+ *                             type: string
+ *                       topics:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             name:
+ *                               type: string
+ *       400:
+ *         description: Invalid query parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/list', validateQuery(getJokesQuerySchema), (req, res, next) => {
+  jokesController.getJokes(req, res).catch(next);
 });
 
 /**

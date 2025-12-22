@@ -130,7 +130,41 @@ export default class JokesRepository {
     return true;
   }
 
-  async getJokes(_userName?: string, _topicName?: string): Promise<JokeWithRelations[]> {
-    return [];
+  /**
+   * Gets jokes filtered by userName and/or topicName.
+   * @param {string} [userName] - Optional user name to filter by
+   * @param {string} [topicName] - Optional topic name to filter by
+   * @returns {Promise<JokeWithRelations[]>} Array of jokes with relations
+   */
+  async getJokes(userName?: string, topicName?: string): Promise<JokeWithRelations[]> {
+    const where: any = {};
+
+    if (userName) {
+      where.user = {
+        name: userName,
+      };
+    }
+
+    if (topicName) {
+      where.jokeTopics = {
+        some: {
+          topic: {
+            name: topicName,
+          },
+        },
+      };
+    }
+
+    return await prisma.joke.findMany({
+      include: {
+        user: true,
+        jokeTopics: {
+          include: {
+            topic: true,
+          },
+        },
+      },
+      where,
+    });
   }
 }
