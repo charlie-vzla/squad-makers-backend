@@ -74,5 +74,17 @@ jest.mock('@elastic/elasticsearch', () => {
 // Mock axios
 jest.mock('axios');
 
+// Mock Winston logger
+jest.mock('../config/logger', () => ({
+  __esModule: true,
+  default: {
+    error: jest.fn(),
+    warn: jest.fn(),
+    info: jest.fn(),
+    http: jest.fn(),
+    debug: jest.fn(),
+  },
+}));
+
 // Increase test timeout for async operations
 jest.setTimeout(10000);

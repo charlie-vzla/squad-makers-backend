@@ -34,10 +34,7 @@ describe('Health Controller', () => {
 
   describe('healthCheck', () => {
     it('should return healthy status when all services are connected', async () => {
-      // Mock successful database connection
       (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ '?column?': 1 }]);
-
-      // Mock successful Elasticsearch connection
       (elasticsearch.checkElasticsearchHealth as jest.Mock).mockResolvedValue(true);
 
       await healthCheck(mockRequest as Request, mockResponse as Response);
@@ -55,10 +52,8 @@ describe('Health Controller', () => {
     });
 
     it('should return unhealthy status when database is disconnected', async () => {
-      // Mock failed database connection
       (prisma.$queryRaw as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-      // Mock successful Elasticsearch connection
       (elasticsearch.checkElasticsearchHealth as jest.Mock).mockResolvedValue(true);
 
       await healthCheck(mockRequest as Request, mockResponse as Response);
@@ -76,10 +71,7 @@ describe('Health Controller', () => {
     });
 
     it('should return unhealthy status when Elasticsearch is disconnected', async () => {
-      // Mock successful database connection
       (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ '?column?': 1 }]);
-
-      // Mock failed Elasticsearch connection
       (elasticsearch.checkElasticsearchHealth as jest.Mock).mockResolvedValue(false);
 
       await healthCheck(mockRequest as Request, mockResponse as Response);
@@ -97,7 +89,6 @@ describe('Health Controller', () => {
     });
 
     it('should include timestamp, uptime, and version in response', async () => {
-      // Mock successful connections
       (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ '?column?': 1 }]);
       (elasticsearch.checkElasticsearchHealth as jest.Mock).mockResolvedValue(true);
 

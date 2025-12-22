@@ -25,9 +25,8 @@ import logger from '../config/logger';
  *             schema:
  *               $ref: '#/components/schemas/HealthCheck'
  */
-export const healthCheck = async (req: Request, res: Response): Promise<void> => {
+export const healthCheck = async (_req: Request, res: Response): Promise<void> => {
   try {
-    // Check database connection
     let databaseStatus: 'connected' | 'disconnected' = 'disconnected';
     try {
       await prisma.$queryRaw`SELECT 1`;
@@ -36,12 +35,10 @@ export const healthCheck = async (req: Request, res: Response): Promise<void> =>
       logger.error('Database health check failed:', error);
     }
 
-    // Check Elasticsearch connection
     const elasticsearchStatus = (await checkElasticsearchHealth())
       ? 'connected'
       : 'disconnected';
 
-    // Determine overall status
     const allServicesHealthy =
       databaseStatus === 'connected' && elasticsearchStatus === 'connected';
 
@@ -60,6 +57,7 @@ export const healthCheck = async (req: Request, res: Response): Promise<void> =>
     res.status(statusCode).json(response);
   } catch (error) {
     logger.error('Health check failed:', error);
+
     res.status(503).json({
       status: 'unhealthy',
       timestamp: new Date().toISOString(),

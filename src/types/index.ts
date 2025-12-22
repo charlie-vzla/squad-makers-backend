@@ -16,16 +16,8 @@ export interface HealthCheckResponse {
   version: string;
 }
 
-export interface JokeResponse {
-  id: string;
-  text: string;
-  source?: string;
-  number: number;
-  user?: {
-    id: string;
-    name: string;
-  };
-  topics?: string[];
-  createdAt: Date;
-  updatedAt: Date;
-}
+// Re-export joke types from models
+export type { JokeDTO, ChuckNorrisJokeDTO, DadJokeDTO, UserDTO } from '../models/jokes/Joke.model';
+
+// Legacy alias for backwards compatibility
+export type JokeResponse = import('../models/jokes/Joke.model').JokeDTO;
