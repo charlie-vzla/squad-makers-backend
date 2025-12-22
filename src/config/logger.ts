@@ -1,5 +1,5 @@
 import winston from 'winston';
-import ElasticsearchTransport from 'winston-elasticsearch';
+import { ElasticsearchTransport } from 'winston-elasticsearch';
 
 const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 const NODE_ENV = process.env.NODE_ENV || 'development';
