@@ -1,6 +1,6 @@
 import JokesRepository from '../../src/repositories/JokesRepository';
 import prisma from '../../src/config/database';
-import { mockPrismaJoke } from '../__mocks__/db/jokes/jokes.mock';
+import { mockPrismaJoke, mockCreatedPrismaJoke } from '../__mocks__/db/jokes/jokes.mock';
 
 jest.mock('../../src/config/database', () => ({
   __esModule: true,
@@ -8,6 +8,10 @@ jest.mock('../../src/config/database', () => ({
     joke: {
       count: jest.fn(),
       findMany: jest.fn(),
+      create: jest.fn(),
+    },
+    jokeTopic: {
+      create: jest.fn(),
     },
   },
 }));
@@ -63,6 +67,39 @@ describe('JokesRepository', () => {
       const result = await repository.getRandomJoke();
 
       expect(result).toBeUndefined();
+    });
+  });
+
+  describe('createJoke', () => {
+    it('should create a joke in the database with userId and topicId', async () => {
+      (prisma.joke.create as jest.Mock).mockResolvedValue(mockCreatedPrismaJoke);
+
+      const result = await repository.createJoke('This is a newly created joke', 'user1', 'topic1');
+
+      expect(prisma.joke.create).toHaveBeenCalledWith({
+        data: {
+          text: 'This is a newly created joke',
+          source: 'custom',
+          userId: 'user1',
+        },
+        include: {
+          user: true,
+          jokeTopics: {
+            include: {
+              topic: true,
+            },
+          },
+        },
+      });
+      expect(prisma.jokeTopic.create).toHaveBeenCalledWith({
+        data: {
+          jokeId: mockCreatedPrismaJoke.id,
+          topicId: 'topic1',
+        },
+      });
+      expect(result).toBeDefined();
+      expect(result.id).toBe(mockCreatedPrismaJoke.id);
+      expect(result.number).toBe(42);
     });
   });
 });

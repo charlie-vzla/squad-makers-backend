@@ -1,22 +1,25 @@
 import axios from 'axios';
-import { mockPrismaJoke } from '../__mocks__/db/jokes/jokes.mock';
+import { mockPrismaJoke, mockCreatedPrismaJoke } from '../__mocks__/db/jokes/jokes.mock';
 import {
   mockChuckNorrisApiResponse,
   mockChuckNorrisJoke,
   mockDadJoke,
   mockDadJokeApiResponse,
+  mockCreatedJokeDTO,
 } from '../__mocks__/models/jokes/jokes.mock';
 import JokesService from '../../src/services/JokesService';
 
 jest.mock('axios');
 
 const mockGetRandomJoke = jest.fn();
+const mockCreateJoke = jest.fn();
 jest.mock('../../src/repositories/JokesRepository', () => ({
   __esModule: true,
   default: class {
     static getInstance() {
       return {
         getRandomJoke: mockGetRandomJoke,
+        createJoke: mockCreateJoke,
       };
     }
   },
@@ -87,6 +90,67 @@ describe('JokesService', () => {
       (axios.get as jest.Mock).mockRejectedValue(new Error('Network error'));
 
       await expect(service.getDadJoke()).rejects.toThrow('Network error');
+    });
+  });
+
+  describe('createJoke', () => {
+    it('should create a joke with provided userId and topicId', async () => {
+      mockCreateJoke.mockResolvedValueOnce(mockCreatedPrismaJoke);
+
+      const result = await service.createJoke('This is a newly created joke', 'user1', 'topic1');
+
+      expect(mockCreateJoke).toHaveBeenCalledWith('This is a newly created joke', 'user1', 'topic1');
+      expect(result).toBeDefined();
+      expect(result.id).toBe(mockCreatedPrismaJoke.id);
+      expect(result.text).toBe(mockCreatedPrismaJoke.text);
+      expect(result.number).toBe(42);
+    });
+
+    it('should create a joke with default userId when not provided', async () => {
+      mockCreateJoke.mockResolvedValueOnce(mockCreatedPrismaJoke);
+
+      const result = await service.createJoke('This is a newly created joke', undefined, 'topic1');
+
+      expect(mockCreateJoke).toHaveBeenCalledWith(
+        'This is a newly created joke',
+        expect.any(String), // default userId
+        'topic1'
+      );
+      expect(result.number).toBe(42);
+    });
+
+    it('should create a joke with default topicId when not provided', async () => {
+      mockCreateJoke.mockResolvedValueOnce(mockCreatedPrismaJoke);
+
+      const result = await service.createJoke('This is a newly created joke', 'user1', undefined);
+
+      expect(mockCreateJoke).toHaveBeenCalledWith(
+        'This is a newly created joke',
+        'user1',
+        expect.any(String) // default topicId
+      );
+      expect(result.number).toBe(42);
+    });
+
+    it('should create a joke with both defaults when userId and topicId not provided', async () => {
+      mockCreateJoke.mockResolvedValueOnce(mockCreatedPrismaJoke);
+
+      const result = await service.createJoke('This is a newly created joke', undefined, undefined);
+
+      expect(mockCreateJoke).toHaveBeenCalledWith(
+        'This is a newly created joke',
+        expect.any(String), // default userId
+        expect.any(String) // default topicId
+      );
+      expect(result.number).toBe(42);
+    });
+
+    it('should throw error if repository fails', async () => {
+      mockCreateJoke.mockRejectedValueOnce(new Error('Database error'));
+
+      await expect(service.createJoke('This is a newly created joke', 'user1', 'topic1')).rejects.toThrow(
+        'Database error'
+      );
     });
   });
 });

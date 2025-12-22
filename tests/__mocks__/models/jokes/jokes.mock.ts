@@ -37,3 +37,17 @@ export const mockDadJokeApiResponse = {
   id: 'dad123',
   joke: 'Why did the scarecrow win an award? Because he was outstanding in his field!',
 };
+
+export const mockCreatedJokeDTO: JokeDTO = {
+  id: '456',
+  text: 'This is a newly created joke',
+  source: 'custom',
+  number: 42,
+  user: {
+    id: 'user1',
+    name: 'Manolito',
+  },
+  topics: ['humor negro'],
+  createdAt: new Date('2024-01-02T00:00:00.000Z'),
+  updatedAt: new Date('2024-01-02T00:00:00.000Z'),
+};

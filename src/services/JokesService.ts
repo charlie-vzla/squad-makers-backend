@@ -90,4 +90,17 @@ export default class JokesService {
       throw error;
     }
   }
+
+  async createJoke(_text: string, _userId?: string, _topicId?: string): Promise<JokeDTO> {
+    return {
+      id: '',
+      text: '',
+      source: 'custom',
+      number: 0,
+      user: { id: '', name: '' },
+      topics: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
 }

@@ -52,4 +52,8 @@ export default class JokesRepository {
 
     return jokes[0];
   }
+
+  async createJoke(_text: string, _userId: string, _topicId: string): Promise<JokeWithRelations> {
+    return {} as JokeWithRelations;
+  }
 }

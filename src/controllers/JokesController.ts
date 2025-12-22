@@ -70,4 +70,11 @@ export class JokesController {
       data: { joke },
     });
   }
+
+  async createJoke(_req: Request, res: Response): Promise<void> {
+    res.status(201).json({
+      success: true,
+      data: { number: 0 },
+    });
+  }
 }

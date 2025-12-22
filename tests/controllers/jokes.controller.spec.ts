@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
-import { mockChuckNorrisJoke, mockDadJoke, mockJokeDTO } from '../__mocks__/models/jokes/jokes.mock';
+import { mockChuckNorrisJoke, mockDadJoke, mockJokeDTO, mockCreatedJokeDTO } from '../__mocks__/models/jokes/jokes.mock';
 import { JokesController } from '../../src/controllers/JokesController';
 
 const mockGetRandomJoke = jest.fn();
 const mockGetChuckNorrisJoke = jest.fn();
 const mockGetDadJoke = jest.fn();
+const mockCreateJoke = jest.fn();
 
 jest.mock('../../src/services/JokesService', () => ({
   __esModule: true,
@@ -14,6 +15,7 @@ jest.mock('../../src/services/JokesService', () => ({
         getRandomJoke: mockGetRandomJoke,
         getChuckNorrisJoke: mockGetChuckNorrisJoke,
         getDadJoke: mockGetDadJoke,
+        createJoke: mockCreateJoke,
       };
     }
   },
@@ -108,6 +110,66 @@ describe('JokesController', () => {
       await expect(
         controller.getJoke('Dad', mockResponse as Response)
       ).rejects.toThrow('External API error');
+    });
+  });
+
+  describe('createJoke', () => {
+    it('should create a joke with text, userId, and topicId', async () => {
+      const mockRequest = {
+        body: {
+          text: 'This is a newly created joke',
+          userId: 'user1',
+          topicId: 'topic1',
+        },
+      } as Request;
+
+      mockCreateJoke.mockResolvedValueOnce(mockCreatedJokeDTO);
+
+      await controller.createJoke(mockRequest, mockResponse as Response);
+
+      expect(mockCreateJoke).toHaveBeenCalledWith(
+        'This is a newly created joke',
+        'user1',
+        'topic1'
+      );
+      expect(statusMock).toHaveBeenCalledWith(201);
+      expect(jsonMock).toHaveBeenCalledWith({
+        success: true,
+        data: { number: 42 },
+      });
+    });
+
+    it('should create a joke with only text (using defaults)', async () => {
+      const mockRequest = {
+        body: {
+          text: 'This is a newly created joke',
+        },
+      } as Request;
+
+      mockCreateJoke.mockResolvedValueOnce(mockCreatedJokeDTO);
+
+      await controller.createJoke(mockRequest, mockResponse as Response);
+
+      expect(mockCreateJoke).toHaveBeenCalledWith('This is a newly created joke', undefined, undefined);
+      expect(statusMock).toHaveBeenCalledWith(201);
+      expect(jsonMock).toHaveBeenCalledWith({
+        success: true,
+        data: { number: 42 },
+      });
+    });
+
+    it('should throw error when service fails', async () => {
+      const mockRequest = {
+        body: {
+          text: 'This is a newly created joke',
+        },
+      } as Request;
+
+      mockCreateJoke.mockRejectedValueOnce(new Error('Database error'));
+
+      await expect(controller.createJoke(mockRequest, mockResponse as Response)).rejects.toThrow(
+        'Database error'
+      );
     });
   });
 });

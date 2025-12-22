@@ -27,3 +27,29 @@ export const mockPrismaJoke: JokeWithRelations = {
 };
 
 export const mockPrismaJokes: JokeWithRelations[] = [mockPrismaJoke];
+
+export const mockCreatedPrismaJoke: JokeWithRelations = {
+  id: '456',
+  text: 'This is a newly created joke',
+  source: 'custom',
+  number: 42,
+  userId: 'user1',
+  createdAt: new Date('2024-01-02T00:00:00.000Z'),
+  updatedAt: new Date('2024-01-02T00:00:00.000Z'),
+  user: {
+    id: 'user1',
+    name: 'Manolito',
+    createdAt: new Date('2024-01-01T00:00:00.000Z'),
+    updatedAt: new Date('2024-01-01T00:00:00.000Z'),
+  },
+  jokeTopics: [
+    {
+      topic: {
+        id: 'topic1',
+        name: 'humor negro',
+        createdAt: new Date('2024-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2024-01-01T00:00:00.000Z'),
+      },
+    },
+  ] as any,
+};
