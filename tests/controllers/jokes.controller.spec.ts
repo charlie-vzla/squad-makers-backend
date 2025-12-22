@@ -8,6 +8,7 @@ const mockGetDadJoke = jest.fn();
 const mockCreateJoke = jest.fn();
 const mockDeleteJoke = jest.fn();
 const mockGetJokes = jest.fn();
+const mockGetPairedJokes = jest.fn();
 
 jest.mock('../../src/services/JokesService', () => ({
   __esModule: true,
@@ -20,6 +21,7 @@ jest.mock('../../src/services/JokesService', () => ({
         createJoke: mockCreateJoke,
         deleteJoke: mockDeleteJoke,
         getJokes: mockGetJokes,
+        getPairedJokes: mockGetPairedJokes,
       };
     }
   },
@@ -306,6 +308,66 @@ describe('JokesController', () => {
 
       await expect(controller.getJokes(mockRequest, mockResponse as Response)).rejects.toThrow(
         'Service error'
+      );
+    });
+  });
+
+  describe('getPairedJokes', () => {
+    it('should return 5 paired jokes', async () => {
+      const mockRequest = {} as Request;
+
+      const mockPairedJokes = [
+        {
+          chuck: 'Chuck Norris counted to infinity. Twice.',
+          dad: 'Why did the math book look sad? Because it had too many problems.',
+          combinado: 'Chuck Norris counted to infinity. Also, the math book had too many problems.',
+        },
+      ];
+
+      mockGetPairedJokes.mockResolvedValueOnce(mockPairedJokes);
+
+      await controller.getPairedJokes(mockRequest, mockResponse as Response);
+
+      expect(mockGetPairedJokes).toHaveBeenCalled();
+      expect(statusMock).toHaveBeenCalledWith(200);
+      expect(jsonMock).toHaveBeenCalledWith({
+        success: true,
+        data: mockPairedJokes,
+      });
+    });
+
+    it('should return exactly 5 paired jokes', async () => {
+      const mockRequest = {} as Request;
+
+      const mockPairedJokes = Array(5).fill(null).map((_, i) => ({
+        chuck: `Chuck joke ${i + 1}`,
+        dad: `Dad joke ${i + 1}`,
+        combinado: `Combined joke ${i + 1}`,
+      }));
+
+      mockGetPairedJokes.mockResolvedValueOnce(mockPairedJokes);
+
+      await controller.getPairedJokes(mockRequest, mockResponse as Response);
+
+      expect(jsonMock).toHaveBeenCalledWith({
+        success: true,
+        data: expect.arrayContaining([
+          expect.objectContaining({
+            chuck: expect.any(String),
+            dad: expect.any(String),
+            combinado: expect.any(String),
+          }),
+        ]),
+      });
+    });
+
+    it('should throw error when service fails', async () => {
+      const mockRequest = {} as Request;
+
+      mockGetPairedJokes.mockRejectedValueOnce(new Error('API error'));
+
+      await expect(controller.getPairedJokes(mockRequest, mockResponse as Response)).rejects.toThrow(
+        'API error'
       );
     });
   });

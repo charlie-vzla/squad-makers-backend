@@ -142,4 +142,8 @@ export default class JokesService {
       throw error;
     }
   }
+
+  async getPairedJokes(): Promise<Array<{ chuck: string; dad: string; combinado: string }>> {
+    return [];
+  }
 }

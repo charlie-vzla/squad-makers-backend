@@ -209,4 +209,104 @@ describe('JokesService', () => {
       await expect(service.getJokes()).rejects.toThrow('Database error');
     });
   });
+
+  describe('getPairedJokes', () => {
+    it('should fetch and pair 5 jokes from each API', async () => {
+      const mockChuckJokes = Array(5).fill(null).map((_, i) => ({
+        value: `Chuck joke ${i + 1}`,
+      }));
+      const mockDadJokes = Array(5).fill(null).map((_, i) => ({
+        joke: `Dad joke ${i + 1}`,
+      }));
+
+      (axios.get as jest.Mock)
+        .mockResolvedValueOnce({ data: mockChuckJokes[0] })
+        .mockResolvedValueOnce({ data: mockChuckJokes[1] })
+        .mockResolvedValueOnce({ data: mockChuckJokes[2] })
+        .mockResolvedValueOnce({ data: mockChuckJokes[3] })
+        .mockResolvedValueOnce({ data: mockChuckJokes[4] })
+        .mockResolvedValueOnce({ data: mockDadJokes[0] })
+        .mockResolvedValueOnce({ data: mockDadJokes[1] })
+        .mockResolvedValueOnce({ data: mockDadJokes[2] })
+        .mockResolvedValueOnce({ data: mockDadJokes[3] })
+        .mockResolvedValueOnce({ data: mockDadJokes[4] });
+
+      const result = await service.getPairedJokes();
+
+      expect(result).toHaveLength(5);
+      expect(result[0]).toHaveProperty('chuck');
+      expect(result[0]).toHaveProperty('dad');
+      expect(result[0]).toHaveProperty('combinado');
+      expect(result[0].chuck).toBe('Chuck joke 1');
+      expect(result[0].dad).toBe('Dad joke 1');
+    });
+
+    it('should create creative combined jokes', async () => {
+      const mockChuckJoke = { value: 'Chuck Norris counted to infinity. Twice.' };
+      const mockDadJoke = { joke: 'Why did the math book look sad? Because it had too many problems.' };
+
+      (axios.get as jest.Mock)
+        .mockResolvedValueOnce({ data: mockChuckJoke })
+        .mockResolvedValueOnce({ data: mockChuckJoke })
+        .mockResolvedValueOnce({ data: mockChuckJoke })
+        .mockResolvedValueOnce({ data: mockChuckJoke })
+        .mockResolvedValueOnce({ data: mockChuckJoke })
+        .mockResolvedValueOnce({ data: mockDadJoke })
+        .mockResolvedValueOnce({ data: mockDadJoke })
+        .mockResolvedValueOnce({ data: mockDadJoke })
+        .mockResolvedValueOnce({ data: mockDadJoke })
+        .mockResolvedValueOnce({ data: mockDadJoke });
+
+      const result = await service.getPairedJokes();
+
+      expect(result[0].combinado).toBeTruthy();
+      expect(result[0].combinado.length).toBeGreaterThan(0);
+      expect(result[0].combinado).toContain('Chuck Norris');
+      expect(result[0].combinado).toContain('math book');
+    });
+
+    it('should make all requests in parallel', async () => {
+      const startTime = Date.now();
+
+      (axios.get as jest.Mock).mockImplementation(() =>
+        new Promise(resolve => setTimeout(() => resolve({ data: { value: 'test', joke: 'test' } }), 100))
+      );
+
+      await service.getPairedJokes();
+
+      const duration = Date.now() - startTime;
+      expect(duration).toBeLessThan(600);
+    });
+
+    it('should throw error if any API call fails', async () => {
+      (axios.get as jest.Mock)
+        .mockRejectedValueOnce(new Error('Chuck API error'))
+        .mockResolvedValue({ data: { value: 'test', joke: 'test' } });
+
+      await expect(service.getPairedJokes()).rejects.toThrow();
+    });
+
+    it('should handle both Chuck API response formats', async () => {
+      const mockChuckJoke = { value: 'Chuck Norris joke' };
+      const mockDadJoke = { joke: 'Dad joke' };
+
+      (axios.get as jest.Mock)
+        .mockResolvedValue({ data: mockChuckJoke })
+        .mockResolvedValueOnce({ data: mockChuckJoke })
+        .mockResolvedValueOnce({ data: mockChuckJoke })
+        .mockResolvedValueOnce({ data: mockChuckJoke })
+        .mockResolvedValueOnce({ data: mockChuckJoke })
+        .mockResolvedValueOnce({ data: mockChuckJoke })
+        .mockResolvedValueOnce({ data: mockDadJoke })
+        .mockResolvedValueOnce({ data: mockDadJoke })
+        .mockResolvedValueOnce({ data: mockDadJoke })
+        .mockResolvedValueOnce({ data: mockDadJoke })
+        .mockResolvedValueOnce({ data: mockDadJoke });
+
+      const result = await service.getPairedJokes();
+
+      expect(result[0].chuck).toBe('Chuck Norris joke');
+      expect(result[0].dad).toBe('Dad joke');
+    });
+  });
 });
