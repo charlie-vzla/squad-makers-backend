@@ -15,6 +15,7 @@ import JokesRepository from '../repositories/JokesRepository';
  */
 export default class JokesService {
   private static instance: JokesService;
+
   private readonly repository: JokesRepository;
 
   /**
@@ -91,16 +92,22 @@ export default class JokesService {
     }
   }
 
-  async createJoke(_text: string, _userId?: string, _topicId?: string): Promise<JokeDTO> {
-    return {
-      id: '',
-      text: '',
-      source: 'custom',
-      number: 0,
-      user: { id: '', name: '' },
-      topics: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+  /**
+   * Creates a new joke in the database.
+   * @param {string} text - The joke text
+   * @param {string} [userName] - Optional user name (defaults to Pedro)
+   * @param {string} [topicName] - Optional topic name (defaults to chistes verdes)
+   * @returns {Promise<JokeDTO>} The created joke DTO
+   * @throws {Error} If database operation fails
+   */
+  async createJoke(text: string, userName?: string, topicName?: string): Promise<JokeDTO> {
+    try {
+      const joke = await this.repository.createJoke(text, userName, topicName);
+
+      return JokeMapper.toDTO(joke);
+    } catch (error) {
+      logger.error('Error creating joke:', error);
+      throw error;
+    }
   }
 }

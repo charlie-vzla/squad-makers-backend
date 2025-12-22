@@ -114,12 +114,12 @@ describe('JokesController', () => {
   });
 
   describe('createJoke', () => {
-    it('should create a joke with text, userId, and topicId', async () => {
+    it('should create a joke with text, userName, and topicName', async () => {
       const mockRequest = {
         body: {
           text: 'This is a newly created joke',
-          userId: 'user1',
-          topicId: 'topic1',
+          userName: 'Manolito',
+          topicName: 'humor negro',
         },
       } as Request;
 
@@ -129,8 +129,8 @@ describe('JokesController', () => {
 
       expect(mockCreateJoke).toHaveBeenCalledWith(
         'This is a newly created joke',
-        'user1',
-        'topic1'
+        'Manolito',
+        'humor negro'
       );
       expect(statusMock).toHaveBeenCalledWith(201);
       expect(jsonMock).toHaveBeenCalledWith({

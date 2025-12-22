@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { JokesController } from '../controllers/JokesController';
+import { validateRequest, validateParams } from '../middleware/validateRequest';
+import { createJokeSchema, jokeSourceSchema } from '../validators/jokes.validator';
 
 const router = Router();
 const jokesController = JokesController.getInstance();
@@ -91,19 +93,70 @@ router.get('/', (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/:source', (req, res, next) => {
-  const pathParameter: string = req.params.source;
+router.get('/:source', validateParams(jokeSourceSchema), (req, res, next) => {
+  jokesController.getJoke(req.params.source, res).catch(next);
+});
 
-  if (!['Chuck', 'Dad'].includes(pathParameter)) {
-    res.status(400).json({
-      success: false,
-      message: 'Invalid source. Allowed values: Chuck, Dad',
-    });
-
-    return;
-  }
-
-  jokesController.getJoke(pathParameter, res).catch(next);
+/**
+ * @swagger
+ * /api/jokes:
+ *   post:
+ *     summary: Create a new joke
+ *     description: Saves a new joke to the database with optional userName and topicName
+ *     tags: [Jokes]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - text
+ *             properties:
+ *               text:
+ *                 type: string
+ *                 description: The joke text
+ *                 example: "Why did the developer go broke? Because he used up all his cache!"
+ *               userName:
+ *                 type: string
+ *                 description: The name of the user creating the joke (optional, defaults to Pedro)
+ *                 example: "Manolito"
+ *               topicName:
+ *                 type: string
+ *                 description: The name of the topic for the joke (optional, defaults to chistes verdes)
+ *                 example: "humor negro"
+ *     responses:
+ *       201:
+ *         description: Joke created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     number:
+ *                       type: integer
+ *                       example: 42
+ *       400:
+ *         description: Invalid input (missing or empty text)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/', validateRequest(createJokeSchema), (req, res, next) => {
+  jokesController.createJoke(req, res).catch(next);
 });
 
 export default router;

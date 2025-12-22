@@ -8,6 +8,9 @@ import { JokeWithRelations } from '../models/Joke.model';
 export default class JokesRepository {
   private static instance: JokesRepository;
 
+  private readonly DEFAULT_USER_NAME = 'Pedro';
+  private readonly DEFAULT_TOPIC_NAME = 'chistes verdes';
+
   /**
    * Private constructor to enforce Singleton pattern.
    */
@@ -53,7 +56,56 @@ export default class JokesRepository {
     return jokes[0];
   }
 
-  async createJoke(_text: string, _userId: string, _topicId: string): Promise<JokeWithRelations> {
-    return {} as JokeWithRelations;
+  /**
+   * Creates a new joke in the database and associates it with a topic.
+   * @param {string} text - The joke text
+   * @param {string} [userName] - Optional user name (defaults to Pedro)
+   * @param {string} [topicName] - Optional topic name (defaults to chistes verdes)
+   * @returns {Promise<JokeWithRelations>} The created joke with all relations
+   */
+  async createJoke(text: string, userName?: string, topicName?: string): Promise<JokeWithRelations> {
+    const finalUserName = userName || this.DEFAULT_USER_NAME;
+    const finalTopicName = topicName || this.DEFAULT_TOPIC_NAME;
+
+    const user = await prisma.user.findUnique({
+      where: { name: finalUserName },
+    });
+
+    if (!user) {
+      throw new Error(`User '${finalUserName}' not found`);
+    }
+
+    const topic = await prisma.topic.findUnique({
+      where: { name: finalTopicName },
+    });
+
+    if (!topic) {
+      throw new Error(`Topic '${finalTopicName}' not found`);
+    }
+
+    const joke = await prisma.joke.create({
+      data: {
+        text,
+        source: 'custom',
+        userId: user.id,
+      },
+      include: {
+        user: true,
+        jokeTopics: {
+          include: {
+            topic: true,
+          },
+        },
+      },
+    });
+
+    await prisma.jokeTopic.create({
+      data: {
+        jokeId: joke.id,
+        topicId: topic.id,
+      },
+    });
+
+    return joke;
   }
 }

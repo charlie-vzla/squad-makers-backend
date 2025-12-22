@@ -71,10 +71,20 @@ export class JokesController {
     });
   }
 
-  async createJoke(_req: Request, res: Response): Promise<void> {
+  /**
+   * Handles POST /api/jokes request to create a new joke.
+   * @param {Request} req - Express request object with text, userName (optional), topicName (optional)
+   * @param {Response} res - Express response object
+   * @returns {Promise<void>}
+   */
+  async createJoke(req: Request, res: Response): Promise<void> {
+    const { text, userName, topicName } = req.body;
+
+    const joke = await this.service.createJoke(text, userName, topicName);
+
     res.status(201).json({
       success: true,
-      data: { number: 0 },
+      data: { number: joke.number },
     });
   }
 }

@@ -13,6 +13,12 @@ jest.mock('../../src/config/database', () => ({
     jokeTopic: {
       create: jest.fn(),
     },
+    user: {
+      findUnique: jest.fn(),
+    },
+    topic: {
+      findUnique: jest.fn(),
+    },
   },
 }));
 
@@ -71,35 +77,54 @@ describe('JokesRepository', () => {
   });
 
   describe('createJoke', () => {
-    it('should create a joke in the database with userId and topicId', async () => {
+    it('should create a joke with provided userName and topicName', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({ id: 'user1', name: 'Manolito' });
+      (prisma.topic.findUnique as jest.Mock).mockResolvedValue({ id: 'topic1', name: 'humor negro' });
       (prisma.joke.create as jest.Mock).mockResolvedValue(mockCreatedPrismaJoke);
 
-      const result = await repository.createJoke('This is a newly created joke', 'user1', 'topic1');
+      const result = await repository.createJoke('This is a newly created joke', 'Manolito', 'humor negro');
 
-      expect(prisma.joke.create).toHaveBeenCalledWith({
-        data: {
-          text: 'This is a newly created joke',
-          source: 'custom',
-          userId: 'user1',
-        },
-        include: {
-          user: true,
-          jokeTopics: {
-            include: {
-              topic: true,
-            },
-          },
-        },
-      });
-      expect(prisma.jokeTopic.create).toHaveBeenCalledWith({
-        data: {
-          jokeId: mockCreatedPrismaJoke.id,
-          topicId: 'topic1',
-        },
-      });
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { name: 'Manolito' } });
+      expect(prisma.topic.findUnique).toHaveBeenCalledWith({ where: { name: 'humor negro' } });
       expect(result).toBeDefined();
-      expect(result.id).toBe(mockCreatedPrismaJoke.id);
       expect(result.number).toBe(42);
+    });
+
+    it('should use default userName when not provided', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({ id: 'user-pedro', name: 'Pedro' });
+      (prisma.topic.findUnique as jest.Mock).mockResolvedValue({ id: 'topic1', name: 'humor negro' });
+      (prisma.joke.create as jest.Mock).mockResolvedValue(mockCreatedPrismaJoke);
+
+      await repository.createJoke('Another joke', undefined, 'humor negro');
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { name: 'Pedro' } });
+    });
+
+    it('should use default topicName when not provided', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({ id: 'user1', name: 'Manolito' });
+      (prisma.topic.findUnique as jest.Mock).mockResolvedValue({ id: 'topic-verdes', name: 'chistes verdes' });
+      (prisma.joke.create as jest.Mock).mockResolvedValue(mockCreatedPrismaJoke);
+
+      await repository.createJoke('Another joke', 'Manolito', undefined);
+
+      expect(prisma.topic.findUnique).toHaveBeenCalledWith({ where: { name: 'chistes verdes' } });
+    });
+
+    it('should throw error if user not found', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(repository.createJoke('Failed joke', 'NonExistent', 'humor negro')).rejects.toThrow(
+        "User 'NonExistent' not found"
+      );
+    });
+
+    it('should throw error if topic not found', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({ id: 'user1', name: 'Manolito' });
+      (prisma.topic.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(repository.createJoke('Failed joke', 'Manolito', 'NonExistent')).rejects.toThrow(
+        "Topic 'NonExistent' not found"
+      );
     });
   });
 });
