@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  jokes     Joke[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Topic {
+  id         String      @id @default(uuid())
+  name       String      @unique
+  jokeTopics JokeTopic[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@map("topics")
+}
+
+model Joke {
+  id         String      @id @default(uuid())
+  text       String      @db.Text
+  source     String?     // 'Chuck', 'Dad', or 'custom'
+  number     Int         @default(autoincrement())
+  userId     String
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jokeTopics JokeTopic[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@unique([number])
+  @@map("jokes")
+}
+
+model JokeTopic {
+  jokeId    String
+  topicId   String
+  joke      Joke     @relation(fields: [jokeId], references: [id], onDelete: Cascade)
+  topic     Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([jokeId, topicId])
+  @@map("joke_topics")
+}
