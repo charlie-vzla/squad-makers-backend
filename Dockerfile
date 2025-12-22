@@ -1,5 +1,6 @@
 # Base stage
 FROM node:20-alpine AS base
+RUN apk add --no-cache openssl openssl-dev
 WORKDIR /app
 COPY package*.json ./
 
@@ -7,13 +8,18 @@ COPY package*.json ./
 FROM base AS development
 RUN npm install
 COPY . .
+RUN npx prisma generate
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 EXPOSE 3000
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["npm", "run", "dev"]
 
 # Build stage
 FROM base AS build
 RUN npm ci
 COPY . .
+RUN npx prisma generate
 RUN npm run build
 RUN npm prune --production
 

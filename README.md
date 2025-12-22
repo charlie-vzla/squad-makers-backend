@@ -102,7 +102,7 @@ npm run docker:rebuild
 Make sure PostgreSQL and Elasticsearch are running locally or via Docker:
 
 ```bash
-docker-compose up -d postgres elasticsearch
+docker compose up -d postgres elasticsearch
 ```
 
 ### 2. Run Prisma migrations

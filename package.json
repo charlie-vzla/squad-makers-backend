@@ -19,10 +19,10 @@
     "prisma:generate": "prisma generate",
     "prisma:seed": "ts-node prisma/seed.ts",
     "prisma:studio": "prisma studio",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f app",
-    "docker:rebuild": "docker-compose up -d --build"
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f app",
+    "docker:rebuild": "docker compose up -d --build"
   },
   "keywords": [
     "express",

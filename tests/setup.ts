@@ -42,6 +42,7 @@ jest.mock('@prisma/client', () => {
     $connect: jest.fn(),
     $disconnect: jest.fn(),
     $on: jest.fn(),
+    $queryRaw: jest.fn(),
   };
 
   return {
@@ -73,6 +74,18 @@ jest.mock('@elastic/elasticsearch', () => {
 
 // Mock axios
 jest.mock('axios');
+
+// Mock Winston logger
+jest.mock('../src/config/logger', () => ({
+  __esModule: true,
+  default: {
+    error: jest.fn(),
+    warn: jest.fn(),
+    info: jest.fn(),
+    http: jest.fn(),
+    debug: jest.fn(),
+  },
+}));
 
 // Increase test timeout for async operations
 jest.setTimeout(10000);

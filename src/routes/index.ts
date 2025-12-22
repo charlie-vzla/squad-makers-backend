@@ -1,11 +1,13 @@
 import { Router } from 'express';
-import { healthCheck } from '../controllers/healthController';
+import healthRoutes from './health.routes';
+import jokesRoutes from './jokes.routes';
+import mathRoutes from './math.routes';
 
 const router = Router();
 
-// Health check route
-router.get('/health', healthCheck);
-
-// Other routes will be added as endpoints are implemented
+// Mount domain-specific routes
+router.use('/health', healthRoutes);
+router.use('/jokes', jokesRoutes);
+router.use('/math', mathRoutes);
 
 export default router;

@@ -1,17 +1,17 @@
 import { Request, Response } from 'express';
-import { healthCheck } from '../../controllers/healthController';
-import prisma from '../../config/database';
-import * as elasticsearch from '../../config/elasticsearch';
+import { healthCheck } from '../../src/controllers/healthController';
+import prisma from '../../src/config/database';
+import * as elasticsearch from '../../src/config/elasticsearch';
 
 // Mock the modules
-jest.mock('../../config/database', () => ({
+jest.mock('../../src/config/database', () => ({
   __esModule: true,
   default: {
     $queryRaw: jest.fn(),
   },
 }));
 
-jest.mock('../../config/elasticsearch');
+jest.mock('../../src/config/elasticsearch');
 
 describe('Health Controller', () => {
   let mockRequest: Partial<Request>;
