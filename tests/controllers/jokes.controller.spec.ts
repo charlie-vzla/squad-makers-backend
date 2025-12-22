@@ -7,6 +7,7 @@ const mockGetChuckNorrisJoke = jest.fn();
 const mockGetDadJoke = jest.fn();
 const mockCreateJoke = jest.fn();
 const mockDeleteJoke = jest.fn();
+const mockGetJokes = jest.fn();
 
 jest.mock('../../src/services/JokesService', () => ({
   __esModule: true,
@@ -18,6 +19,7 @@ jest.mock('../../src/services/JokesService', () => ({
         getDadJoke: mockGetDadJoke,
         createJoke: mockCreateJoke,
         deleteJoke: mockDeleteJoke,
+        getJokes: mockGetJokes,
       };
     }
   },
@@ -218,6 +220,91 @@ describe('JokesController', () => {
       mockDeleteJoke.mockRejectedValueOnce(new Error('Service error'));
 
       await expect(controller.deleteJoke(mockRequest, mockResponse as Response)).rejects.toThrow(
+        'Service error'
+      );
+    });
+  });
+
+  describe('getJokes', () => {
+    it('should return all jokes when no filters provided', async () => {
+      const mockRequest = {
+        query: {},
+      } as unknown as Request;
+
+      mockGetJokes.mockResolvedValueOnce([mockJokeDTO]);
+
+      await controller.getJokes(mockRequest, mockResponse as Response);
+
+      expect(mockGetJokes).toHaveBeenCalledWith(undefined, undefined);
+      expect(statusMock).toHaveBeenCalledWith(200);
+      expect(jsonMock).toHaveBeenCalledWith({
+        success: true,
+        data: [mockJokeDTO],
+      });
+    });
+
+    it('should filter jokes by userName', async () => {
+      const mockRequest = {
+        query: { userName: 'Manolito' },
+      } as unknown as Request;
+
+      mockGetJokes.mockResolvedValueOnce([mockJokeDTO]);
+
+      await controller.getJokes(mockRequest, mockResponse as Response);
+
+      expect(mockGetJokes).toHaveBeenCalledWith('Manolito', undefined);
+      expect(statusMock).toHaveBeenCalledWith(200);
+    });
+
+    it('should filter jokes by topicName', async () => {
+      const mockRequest = {
+        query: { topicName: 'humor negro' },
+      } as unknown as Request;
+
+      mockGetJokes.mockResolvedValueOnce([mockJokeDTO]);
+
+      await controller.getJokes(mockRequest, mockResponse as Response);
+
+      expect(mockGetJokes).toHaveBeenCalledWith(undefined, 'humor negro');
+      expect(statusMock).toHaveBeenCalledWith(200);
+    });
+
+    it('should filter jokes by both userName and topicName', async () => {
+      const mockRequest = {
+        query: { userName: 'Manolito', topicName: 'humor negro' },
+      } as unknown as Request;
+
+      mockGetJokes.mockResolvedValueOnce([mockJokeDTO]);
+
+      await controller.getJokes(mockRequest, mockResponse as Response);
+
+      expect(mockGetJokes).toHaveBeenCalledWith('Manolito', 'humor negro');
+      expect(statusMock).toHaveBeenCalledWith(200);
+    });
+
+    it('should return empty array when no jokes found', async () => {
+      const mockRequest = {
+        query: { userName: 'NonExistent' },
+      } as unknown as Request;
+
+      mockGetJokes.mockResolvedValueOnce([]);
+
+      await controller.getJokes(mockRequest, mockResponse as Response);
+
+      expect(jsonMock).toHaveBeenCalledWith({
+        success: true,
+        data: [],
+      });
+    });
+
+    it('should throw error when service fails', async () => {
+      const mockRequest = {
+        query: {},
+      } as unknown as Request;
+
+      mockGetJokes.mockRejectedValueOnce(new Error('Service error'));
+
+      await expect(controller.getJokes(mockRequest, mockResponse as Response)).rejects.toThrow(
         'Service error'
       );
     });

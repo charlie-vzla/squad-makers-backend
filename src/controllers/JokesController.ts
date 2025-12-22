@@ -113,4 +113,21 @@ export class JokesController {
       message: 'Joke deleted successfully',
     });
   }
+
+  /**
+   * Handles GET /api/jokes request to retrieve jokes with optional filters.
+   * @param {Request} req - Express request object with optional userName and topicName query params
+   * @param {Response} res - Express response object
+   * @returns {Promise<void>}
+   */
+  async getJokes(req: Request, res: Response): Promise<void> {
+    const { userName, topicName } = req.query as { userName?: string; topicName?: string };
+
+    const jokes = await this.service.getJokes(userName, topicName);
+
+    res.status(200).json({
+      success: true,
+      data: jokes,
+    });
+  }
 }

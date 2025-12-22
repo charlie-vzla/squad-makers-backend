@@ -35,7 +35,7 @@ describe('MathController', () => {
   describe('getLCM', () => {
     it('should calculate LCM for two numbers', async () => {
       const mockRequest = {
-        query: { numbers: '4,6' },
+        query: { numbers: [4,6] },
       } as unknown as Request;
 
       mockCalculateLCM.mockResolvedValueOnce(12);
