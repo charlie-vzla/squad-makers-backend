@@ -23,8 +23,7 @@ export class MathController {
    * @returns {Promise<void>}
    */
   async getLCM(req: Request, res: Response): Promise<void> {
-    const numbersStr = req.query.numbers as string;
-    const numbers = numbersStr.split(',').map(num => Number.parseInt(num.trim(), 10));
+    const numbers = req.query.numbers as unknown as number[];
 
     const lcm = await this.service.calculateLCM(numbers);
 
