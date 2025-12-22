@@ -130,4 +130,30 @@ export class JokesController {
       data: jokes,
     });
   }
+
+  /**
+   * Handles GET /api/jokes/paired request to get paired jokes from external APIs.
+   * @param {Request} _req - Express request object
+   * @param {Response} res - Express response object
+   * @returns {Promise<void>}
+   */
+  async getPairedJokes(_req: Request, res: Response): Promise<void> {
+    try {
+      const pairedJokes = await this.service.getPairedJokes();
+
+      res.status(200).json({
+        success: true,
+        data: pairedJokes,
+      });
+    } catch (error: any) {
+      if (error.message === 'No jokes could be retrieved from APIs') {
+        res.status(404).json({
+          success: false,
+          message: 'Could not retrieve any jokes from external APIs',
+        });
+        return;
+      }
+      throw error;
+    }
+  }
 }
