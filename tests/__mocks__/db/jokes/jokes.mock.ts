@@ -1,4 +1,4 @@
-import { JokeWithRelations } from '../../../models/jokes/Joke.model';
+import { JokeWithRelations } from '../../../../src/models/Joke.model';
 
 export const mockPrismaJoke: JokeWithRelations = {
   id: '123',

@@ -42,6 +42,7 @@ jest.mock('@prisma/client', () => {
     $connect: jest.fn(),
     $disconnect: jest.fn(),
     $on: jest.fn(),
+    $queryRaw: jest.fn(),
   };
 
   return {
@@ -75,7 +76,7 @@ jest.mock('@elastic/elasticsearch', () => {
 jest.mock('axios');
 
 // Mock Winston logger
-jest.mock('../config/logger', () => ({
+jest.mock('../src/config/logger', () => ({
   __esModule: true,
   default: {
     error: jest.fn(),

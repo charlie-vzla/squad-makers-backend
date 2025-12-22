@@ -51,7 +51,7 @@ async function main() {
   for (const user of createdUsers) {
     for (const topic of createdTopics) {
       for (let i = 1; i <= 3; i++) {
-        const joke = await prisma.joke.create({
+        await prisma.joke.create({
           data: {
             text: `Este es el chiste ${i} de ${topic.name} por ${user.name}`,
             source: 'custom',
@@ -65,6 +65,7 @@ async function main() {
             },
           },
         });
+
         jokeCount++;
       }
     }

@@ -56,25 +56,4 @@ export class JokeMapper {
       updatedAt: joke.updatedAt,
     };
   }
-
-  static chuckNorrisToDTO(apiResponse: {
-    id: string;
-    value: string;
-    url: string;
-  }): ChuckNorrisJokeDTO {
-    return {
-      id: apiResponse.id,
-      text: apiResponse.value,
-      source: 'Chuck',
-      url: apiResponse.url,
-    };
-  }
-
-  static dadJokeToDTO(apiResponse: { id: string; joke: string }): DadJokeDTO {
-    return {
-      id: apiResponse.id,
-      text: apiResponse.joke,
-      source: 'Dad',
-    };
-  }
 }

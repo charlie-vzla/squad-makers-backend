@@ -1,14 +1,11 @@
 import { Router } from 'express';
-import { healthCheck } from '../controllers/healthController';
-import { JokesController } from '../controllers/jokes/JokesController';
+import healthRoutes from './health.routes';
+import jokesRoutes from './jokes.routes';
 
 const router = Router();
 
-// Health check route
-router.get('/health', healthCheck);
-
-// Jokes routes
-const jokesController = JokesController.getInstance();
-router.get('/jokes/:source?', (req, res) => jokesController.getJoke(req, res));
+// Mount domain-specific routes
+router.use('/health', healthRoutes);
+router.use('/jokes', jokesRoutes);
 
 export default router;

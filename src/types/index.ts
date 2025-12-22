@@ -17,7 +17,7 @@ export interface HealthCheckResponse {
 }
 
 // Re-export joke types from models
-export type { JokeDTO, ChuckNorrisJokeDTO, DadJokeDTO, UserDTO } from '../models/jokes/Joke.model';
+export type { JokeDTO, ChuckNorrisJokeDTO, DadJokeDTO, UserDTO } from '../models/Joke.model';
 
 // Legacy alias for backwards compatibility
-export type JokeResponse = import('../models/jokes/Joke.model').JokeDTO;
+export type JokeResponse = import('../models/Joke.model').JokeDTO;

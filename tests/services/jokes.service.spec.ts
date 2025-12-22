@@ -1,46 +1,44 @@
 import axios from 'axios';
-import { JokesService } from '../../services/jokes/JokesService';
-import { JokesRepository } from '../../repositories/jokes/JokesRepository';
-import { mockPrismaJoke } from '../../__mocks__/db/jokes/jokes.mock';
+import { mockPrismaJoke } from '../__mocks__/db/jokes/jokes.mock';
 import {
   mockChuckNorrisApiResponse,
-  mockDadJokeApiResponse,
   mockChuckNorrisJoke,
   mockDadJoke,
-} from '../../__mocks__/models/jokes/jokes.mock';
+  mockDadJokeApiResponse,
+} from '../__mocks__/models/jokes/jokes.mock';
+import JokesService from '../../src/services/JokesService';
 
-// Mock dependencies
 jest.mock('axios');
-jest.mock('../../repositories/jokes/JokesRepository');
+
+const mockGetRandomJoke = jest.fn();
+jest.mock('../../src/repositories/JokesRepository', () => ({
+  __esModule: true,
+  default: class {
+    static getInstance() {
+      return {
+        getRandomJoke: mockGetRandomJoke,
+      };
+    }
+  },
+}));
 
 describe('JokesService', () => {
   let service: JokesService;
-  let mockRepositoryInstance: jest.Mocked<JokesRepository>;
 
   beforeEach(() => {
-    // Mock repository instance
-    mockRepositoryInstance = {
-      getRandomJoke: jest.fn(),
-    } as any;
-
-    // Mock the getInstance method
-    (JokesRepository.getInstance as jest.Mock) = jest
-      .fn()
-      .mockReturnValue(mockRepositoryInstance);
-
-    // Get service instance
+    // Reset singleton
+    (JokesService as any).instance = undefined;
     service = JokesService.getInstance();
-
     jest.clearAllMocks();
   });
 
   describe('getRandomJoke', () => {
     it('should return a random joke from the repository', async () => {
-      mockRepositoryInstance.getRandomJoke.mockResolvedValue(mockPrismaJoke);
+      mockGetRandomJoke.mockResolvedValueOnce(mockPrismaJoke);
 
       const result = await service.getRandomJoke();
 
-      expect(mockRepositoryInstance.getRandomJoke).toHaveBeenCalledTimes(1);
+      expect(mockGetRandomJoke).toHaveBeenCalledTimes(1);
       expect(result).toBeDefined();
       expect(result?.id).toBe(mockPrismaJoke.id);
       expect(result?.text).toBe(mockPrismaJoke.text);
@@ -48,7 +46,7 @@ describe('JokesService', () => {
     });
 
     it('should return null if no jokes exist', async () => {
-      mockRepositoryInstance.getRandomJoke.mockResolvedValue(null);
+      mockGetRandomJoke.mockResolvedValueOnce(null);
 
       const result = await service.getRandomJoke();
 
@@ -63,7 +61,7 @@ describe('JokesService', () => {
       const result = await service.getChuckNorrisJoke();
 
       expect(axios.get).toHaveBeenCalledWith('https://api.chucknorris.io/jokes/random');
-      expect(result).toEqual(mockChuckNorrisJoke);
+      expect(result).toEqual(mockChuckNorrisJoke.text);
     });
 
     it('should throw error if API call fails', async () => {
@@ -82,7 +80,7 @@ describe('JokesService', () => {
       expect(axios.get).toHaveBeenCalledWith('https://icanhazdadjoke.com', {
         headers: { Accept: 'application/json' },
       });
-      expect(result).toEqual(mockDadJoke);
+      expect(result).toEqual(mockDadJoke.text);
     });
 
     it('should throw error if API call fails', async () => {

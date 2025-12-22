@@ -1,8 +1,8 @@
-import { JokesRepository } from '../../repositories/jokes/JokesRepository';
-import prisma from '../../config/database';
-import { mockPrismaJoke } from '../../__mocks__/db/jokes/jokes.mock';
+import JokesRepository from '../../src/repositories/JokesRepository';
+import prisma from '../../src/config/database';
+import { mockPrismaJoke } from '../__mocks__/db/jokes/jokes.mock';
 
-jest.mock('../../config/database', () => ({
+jest.mock('../../src/config/database', () => ({
   __esModule: true,
   default: {
     joke: {
@@ -16,6 +16,8 @@ describe('JokesRepository', () => {
   let repository: JokesRepository;
 
   beforeEach(() => {
+    // Reset singleton
+    (JokesRepository as any).instance = undefined;
     repository = JokesRepository.getInstance();
     jest.clearAllMocks();
   });
@@ -54,13 +56,13 @@ describe('JokesRepository', () => {
       expect(result).toBeNull();
     });
 
-    it('should return null if findMany returns empty array', async () => {
+    it('should return undefined if findMany returns empty array', async () => {
       (prisma.joke.count as jest.Mock).mockResolvedValue(10);
       (prisma.joke.findMany as jest.Mock).mockResolvedValue([]);
 
       const result = await repository.getRandomJoke();
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
   });
 });

@@ -1,4 +1,4 @@
-import { JokeDTO, ChuckNorrisJokeDTO, DadJokeDTO } from '../../../models/jokes/Joke.model';
+import { JokeDTO, ChuckNorrisJokeDTO, DadJokeDTO } from '../../../../src/models/Joke.model';
 
 export const mockJokeDTO: JokeDTO = {
   id: '123',
