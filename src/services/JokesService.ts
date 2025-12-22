@@ -1,4 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
+import nlp from 'compromise';
 import { ChuckJokeResponseInterface } from 'interfaces/ChuckJokes/ChuckJokeResponseInterface';
 import { DadJokeResponseInterface } from 'interfaces/DadJokes/DadJokeResponseInterface';
 import { env } from '../config/env';
@@ -8,6 +9,36 @@ import {
   JokeMapper
 } from '../models/Joke.model';
 import JokesRepository from '../repositories/JokesRepository';
+
+/**
+ * Semantic bridge categories for joke combination
+ */
+const BRIDGES = {
+  curiosity: [
+    'Interestingly,',
+    'Speaking of mysteries,',
+    'On that note,',
+    'Funnily enough,',
+  ],
+  contrast: [
+    'On the bright side,',
+    'In contrast,',
+    'More cheerfully,',
+    'Shifting gears,',
+  ],
+  topic: [
+    'Speaking of {{NOUN}},',
+    'On the topic of {{NOUN}},',
+    'That reminds me of {{NOUN}}:',
+    'Regarding {{NOUN}},',
+  ],
+  generic: [
+    'Meanwhile,',
+    'In other news,',
+    'Additionally,',
+    'Also,',
+  ],
+};
 
 /**
  * Service layer for handling joke-related business logic.
@@ -143,7 +174,135 @@ export default class JokesService {
     }
   }
 
+  /**
+   * Fetches and pairs jokes from Chuck Norris and Dad Jokes APIs.
+   * Makes 5 requests to each API in parallel and pairs them 1-to-1.
+   * @returns {Promise<Array<{ chuck: string; dad: string; combinado: string }>>} Array of paired jokes
+   * @throws {Error} If all API calls fail
+   */
   async getPairedJokes(): Promise<Array<{ chuck: string; dad: string; combinado: string }>> {
-    return [];
+    try {
+      const chuckPromises = Array(5)
+        .fill(null)
+        .map(() =>
+          axios
+            .get('https://api.chucknorris.io/jokes/random')
+            .then((response) => response.data.value)
+            .catch(() => null)
+        );
+
+      const dadPromises = Array(5)
+        .fill(null)
+        .map(() =>
+          axios
+            .get('https://icanhazdadjoke.com/', {
+              headers: { Accept: 'application/json' },
+            })
+            .then((response) => response.data.joke)
+            .catch(() => null)
+        );
+
+      const [chuckJokes, dadJokes] = await Promise.all([
+        Promise.all(chuckPromises),
+        Promise.all(dadPromises),
+      ]);
+
+      const pairedJokes = [];
+      for (let i = 0; i < 5; i++) {
+        if (chuckJokes[i] && dadJokes[i]) {
+          pairedJokes.push({
+            chuck: chuckJokes[i],
+            dad: dadJokes[i],
+            combinado: this.combineJokes(chuckJokes[i], dadJokes[i]),
+          });
+        }
+      }
+
+      if (pairedJokes.length === 0) {
+        throw new Error('No jokes could be retrieved from APIs');
+      }
+
+      logger.info(`Successfully paired ${pairedJokes.length} jokes`);
+      return pairedJokes;
+    } catch (error) {
+      logger.error('Error fetching paired jokes:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Removes trailing punctuation from a joke to allow clean concatenation.
+   * @param {string} text - The text to clean
+   * @returns {string} Text without trailing punctuation
+   */
+  private cleanEnd(text: string): string {
+    return text.replace(/[.!?]+$/, '').trim();
+  }
+
+  /**
+   * Lowercases the first letter of the dad joke UNLESS it's a proper noun or "I".
+   * @param {string} text - The dad joke text
+   * @param {any} doc - The compromise NLP document
+   * @returns {string} Formatted text
+   */
+  private formatDadJoke(text: string, doc: any): string {
+    const firstTerm = doc.terms().first();
+
+    // Don't lowercase proper nouns (names, cities) or "I"
+    if (firstTerm.has('#ProperNoun') || firstTerm.text() === 'I') {
+      return text;
+    }
+
+    return text.charAt(0).toLowerCase() + text.slice(1);
+  }
+
+  /**
+   * Creates a creative combination of two jokes using NLP-powered semantic bridging.
+   * Uses compromise library to analyze context and select appropriate bridges.
+   * Strategy: Analyze sentiment → Detect questions → Find topics → Bridge naturally
+   * @param {string} chuckJoke - Chuck Norris joke
+   * @param {string} dadJoke - Dad joke
+   * @returns {string} Combined joke that feels cohesive
+   */
+  private combineJokes(chuckJoke: string, dadJoke: string): string {
+    const docChuck = nlp(chuckJoke);
+    const docDad = nlp(dadJoke);
+
+    // 1. ANALYZE CONTEXT
+    // Does the dad joke ask a question?
+    const isQuestion = docDad.questions().found;
+
+    // Is the Chuck joke dark/violent? (death, kill, pain, blood, etc)
+    const isDark = docChuck.has('(death|kill|pain|blood|reaper|fear|scared|die|corpse|vomit|murder)');
+
+    // Find the last significant noun in Chuck joke for topic bridging
+    const nouns = docChuck.nouns().toSingular().out('array') as string[];
+    const topicNoun = nouns.length > 0 ? nouns[nouns.length - 1] : null;
+
+    // 2. SELECT BRIDGE CATEGORY
+    let category: 'curiosity' | 'contrast' | 'topic' | 'generic' = 'generic';
+
+    if (isQuestion) {
+      category = 'curiosity';
+    } else if (isDark) {
+      category = 'contrast';
+    } else if (topicNoun) {
+      category = 'topic';
+    }
+
+    // 3. PICK RANDOM BRIDGE FROM CATEGORY
+    const options = BRIDGES[category];
+    let bridge = options[Math.floor(Math.random() * options.length)];
+
+    // 4. INJECT TOPIC (if applicable)
+    if (category === 'topic' && topicNoun) {
+      bridge = bridge.replace('{{NOUN}}', topicNoun);
+    }
+
+    // 5. ASSEMBLE
+    const partA = this.cleanEnd(chuckJoke);
+    const partB = this.formatDadJoke(dadJoke, docDad);
+
+    return `${partA}. ${bridge} ${partB}`;
   }
 }

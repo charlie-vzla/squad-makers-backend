@@ -361,13 +361,27 @@ describe('JokesController', () => {
       });
     });
 
-    it('should throw error when service fails', async () => {
+    it('should return 404 when no jokes could be retrieved', async () => {
       const mockRequest = {} as Request;
 
-      mockGetPairedJokes.mockRejectedValueOnce(new Error('API error'));
+      mockGetPairedJokes.mockRejectedValueOnce(new Error('No jokes could be retrieved from APIs'));
+
+      await controller.getPairedJokes(mockRequest, mockResponse as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(404);
+      expect(jsonMock).toHaveBeenCalledWith({
+        success: false,
+        message: 'Could not retrieve any jokes from external APIs',
+      });
+    });
+
+    it('should throw error when service fails with other errors', async () => {
+      const mockRequest = {} as Request;
+
+      mockGetPairedJokes.mockRejectedValueOnce(new Error('Unexpected error'));
 
       await expect(controller.getPairedJokes(mockRequest, mockResponse as Response)).rejects.toThrow(
-        'API error'
+        'Unexpected error'
       );
     });
   });

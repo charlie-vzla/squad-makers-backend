@@ -43,6 +43,49 @@ router.get('/', (req, res, next) => {
 
 /**
  * @swagger
+ * /api/jokes/paired:
+ *   get:
+ *     summary: Get 5 paired jokes from Chuck Norris and Dad Jokes APIs
+ *     description: Fetches 5 jokes from each API in parallel, pairs them 1-to-1, and creates a combined creative version
+ *     tags: [Jokes]
+ *     responses:
+ *       200:
+ *         description: Paired jokes retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       chuck:
+ *                         type: string
+ *                         example: "Chuck Norris counted to infinity. Twice."
+ *                       dad:
+ *                         type: string
+ *                         example: "Why did the math book look sad? Because it had too many problems."
+ *                       combinado:
+ *                         type: string
+ *                         example: "Chuck Norris counted to infinity. Also, the math book had too many problems."
+ *       500:
+ *         description: Error fetching jokes from external APIs
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/paired', (req, res, next) => {
+  jokesController.getPairedJokes(req, res).catch(next);
+});
+
+/**
+ * @swagger
  * /api/jokes/list:
  *   get:
  *     summary: List jokes with optional filters
@@ -279,49 +322,6 @@ router.post('/', validateRequest(createJokeSchema), (req, res, next) => {
  */
 router.delete('/:number', validateParams(jokeNumberSchema), (req, res, next) => {
   jokesController.deleteJoke(req, res).catch(next);
-});
-
-/**
- * @swagger
- * /api/jokes/paired:
- *   get:
- *     summary: Get 5 paired jokes from Chuck Norris and Dad Jokes APIs
- *     description: Fetches 5 jokes from each API in parallel, pairs them 1-to-1, and creates a combined creative version
- *     tags: [Jokes]
- *     responses:
- *       200:
- *         description: Paired jokes retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       chuck:
- *                         type: string
- *                         example: "Chuck Norris counted to infinity. Twice."
- *                       dad:
- *                         type: string
- *                         example: "Why did the math book look sad? Because it had too many problems."
- *                       combinado:
- *                         type: string
- *                         example: "Chuck Norris counted to infinity. Also, the math book had too many problems."
- *       500:
- *         description: Error fetching jokes from external APIs
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- */
-router.get('/paired', (req, res, next) => {
-  jokesController.getPairedJokes(req, res).catch(next);
 });
 
 export default router;
