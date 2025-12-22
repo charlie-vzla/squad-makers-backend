@@ -9,6 +9,8 @@ jest.mock('../../src/config/database', () => ({
       count: jest.fn(),
       findMany: jest.fn(),
       create: jest.fn(),
+      findUnique: jest.fn(),
+      delete: jest.fn(),
     },
     jokeTopic: {
       create: jest.fn(),
@@ -125,6 +127,29 @@ describe('JokesRepository', () => {
       await expect(repository.createJoke('Failed joke', 'Manolito', 'NonExistent')).rejects.toThrow(
         "Topic 'NonExistent' not found"
       );
+    });
+  });
+
+  describe('deleteJoke', () => {
+    it('should delete a joke by number', async () => {
+      (prisma.joke.findUnique as jest.Mock).mockResolvedValue(mockPrismaJoke);
+      (prisma.joke.delete as jest.Mock).mockResolvedValue(mockPrismaJoke);
+
+      const result = await repository.deleteJoke(1);
+
+      expect(prisma.joke.findUnique).toHaveBeenCalledWith({ where: { number: 1 } });
+      expect(prisma.joke.delete).toHaveBeenCalledWith({ where: { id: mockPrismaJoke.id } });
+      expect(result).toBe(true);
+    });
+
+    it('should return false when joke not found', async () => {
+      (prisma.joke.findUnique as jest.Mock).mockResolvedValue(null);
+
+      const result = await repository.deleteJoke(999);
+
+      expect(prisma.joke.findUnique).toHaveBeenCalledWith({ where: { number: 999 } });
+      expect(prisma.joke.delete).not.toHaveBeenCalled();
+      expect(result).toBe(false);
     });
   });
 });

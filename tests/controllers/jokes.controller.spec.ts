@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { mockChuckNorrisJoke, mockDadJoke, mockJokeDTO, mockCreatedJokeDTO } from '../__mocks__/models/jokes/jokes.mock';
 import { JokesController } from '../../src/controllers/JokesController';
+import JokesService from '../../src/services/JokesService';
 
 const mockGetRandomJoke = jest.fn();
 const mockGetChuckNorrisJoke = jest.fn();
@@ -169,6 +170,72 @@ describe('JokesController', () => {
 
       await expect(controller.createJoke(mockRequest, mockResponse as Response)).rejects.toThrow(
         'Database error'
+      );
+    });
+  });
+
+  describe('deleteJoke', () => {
+    it('should delete a joke by number', async () => {
+      const mockRequest = {
+        params: { number: '1' },
+      } as unknown as Request;
+
+      const mockDeleteJoke = jest.fn().mockResolvedValueOnce(true);
+      (JokesService.getInstance as jest.Mock).mockReturnValue({
+        getRandomJoke: jest.fn(),
+        getJoke: jest.fn(),
+        createJoke: jest.fn(),
+        deleteJoke: mockDeleteJoke,
+      });
+
+      await controller.deleteJoke(mockRequest, mockResponse as Response);
+
+      expect(mockDeleteJoke).toHaveBeenCalledWith(1);
+      expect(statusMock).toHaveBeenCalledWith(200);
+      expect(jsonMock).toHaveBeenCalledWith({
+        success: true,
+        message: 'Joke deleted successfully',
+      });
+    });
+
+    it('should return 404 when joke not found', async () => {
+      const mockRequest = {
+        params: { number: '999' },
+      } as unknown as Request;
+
+      const mockDeleteJoke = jest.fn().mockResolvedValueOnce(false);
+      (JokesService.getInstance as jest.Mock).mockReturnValue({
+        getRandomJoke: jest.fn(),
+        getJoke: jest.fn(),
+        createJoke: jest.fn(),
+        deleteJoke: mockDeleteJoke,
+      });
+
+      await controller.deleteJoke(mockRequest, mockResponse as Response);
+
+      expect(mockDeleteJoke).toHaveBeenCalledWith(999);
+      expect(statusMock).toHaveBeenCalledWith(404);
+      expect(jsonMock).toHaveBeenCalledWith({
+        success: false,
+        message: 'Joke not found',
+      });
+    });
+
+    it('should throw error when service fails', async () => {
+      const mockRequest = {
+        params: { number: '1' },
+      } as unknown as Request;
+
+      const mockDeleteJoke = jest.fn().mockRejectedValueOnce(new Error('Service error'));
+      (JokesService.getInstance as jest.Mock).mockReturnValue({
+        getRandomJoke: jest.fn(),
+        getJoke: jest.fn(),
+        createJoke: jest.fn(),
+        deleteJoke: mockDeleteJoke,
+      });
+
+      await expect(controller.deleteJoke(mockRequest, mockResponse as Response)).rejects.toThrow(
+        'Service error'
       );
     });
   });

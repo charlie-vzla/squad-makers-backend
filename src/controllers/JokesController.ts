@@ -87,4 +87,8 @@ export class JokesController {
       data: { number: joke.number },
     });
   }
+
+  async deleteJoke(_req: Request, res: Response): Promise<void> {
+    res.status(500).json({ success: false });
+  }
 }

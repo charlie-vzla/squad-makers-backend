@@ -108,4 +108,8 @@ export default class JokesRepository {
 
     return joke;
   }
+
+  async deleteJoke(_number: number): Promise<boolean> {
+    return false;
+  }
 }

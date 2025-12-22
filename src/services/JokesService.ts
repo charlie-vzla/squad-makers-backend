@@ -110,4 +110,8 @@ export default class JokesService {
       throw error;
     }
   }
+
+  async deleteJoke(_number: number): Promise<boolean> {
+    return false;
+  }
 }
