@@ -129,4 +129,8 @@ export default class JokesRepository {
 
     return true;
   }
+
+  async getJokes(_userName?: string, _topicName?: string): Promise<JokeWithRelations[]> {
+    return [];
+  }
 }

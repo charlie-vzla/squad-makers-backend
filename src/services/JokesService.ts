@@ -125,4 +125,8 @@ export default class JokesService {
       throw error;
     }
   }
+
+  async getJokes(_userName?: string, _topicName?: string): Promise<JokeDTO[]> {
+    return [];
+  }
 }

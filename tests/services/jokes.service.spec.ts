@@ -13,11 +13,13 @@ jest.mock('axios');
 const mockGetRandomJoke = jest.fn();
 const mockCreateJoke = jest.fn();
 const mockDeleteJoke = jest.fn();
+const mockGetJokes = jest.fn();
 
 const mockRepository = {
   getRandomJoke: mockGetRandomJoke,
   createJoke: mockCreateJoke,
   deleteJoke: mockDeleteJoke,
+  getJokes: mockGetJokes,
 };
 
 jest.mock('../../src/repositories/JokesRepository', () => ({
@@ -155,6 +157,56 @@ describe('JokesService', () => {
       mockDeleteJoke.mockRejectedValueOnce(new Error('Database error'));
 
       await expect(service.deleteJoke(1)).rejects.toThrow('Database error');
+    });
+  });
+
+  describe('getJokes', () => {
+    it('should return all jokes when no filters provided', async () => {
+      mockGetJokes.mockResolvedValueOnce([mockPrismaJoke]);
+
+      const result = await service.getJokes();
+
+      expect(mockGetJokes).toHaveBeenCalledWith(undefined, undefined);
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(mockPrismaJoke.id);
+    });
+
+    it('should titlecase userName before querying', async () => {
+      mockGetJokes.mockResolvedValueOnce([mockPrismaJoke]);
+
+      await service.getJokes('manolito');
+
+      expect(mockGetJokes).toHaveBeenCalledWith('Manolito', undefined);
+    });
+
+    it('should lowercase topicName before querying', async () => {
+      mockGetJokes.mockResolvedValueOnce([mockPrismaJoke]);
+
+      await service.getJokes(undefined, 'HUMOR NEGRO');
+
+      expect(mockGetJokes).toHaveBeenCalledWith(undefined, 'humor negro');
+    });
+
+    it('should transform both userName and topicName', async () => {
+      mockGetJokes.mockResolvedValueOnce([mockPrismaJoke]);
+
+      await service.getJokes('manolito', 'HUMOR NEGRO');
+
+      expect(mockGetJokes).toHaveBeenCalledWith('Manolito', 'humor negro');
+    });
+
+    it('should return empty array when no jokes found', async () => {
+      mockGetJokes.mockResolvedValueOnce([]);
+
+      const result = await service.getJokes('NonExistent');
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should throw error when repository fails', async () => {
+      mockGetJokes.mockRejectedValueOnce(new Error('Database error'));
+
+      await expect(service.getJokes()).rejects.toThrow('Database error');
     });
   });
 });

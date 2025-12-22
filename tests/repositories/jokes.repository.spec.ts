@@ -152,4 +152,114 @@ describe('JokesRepository', () => {
       expect(result).toBe(false);
     });
   });
+
+  describe('getJokes', () => {
+    it('should return all jokes when no filters provided', async () => {
+      (prisma.joke.findMany as jest.Mock).mockResolvedValue([mockPrismaJoke]);
+
+      const result = await repository.getJokes();
+
+      expect(prisma.joke.findMany).toHaveBeenCalledWith({
+        include: {
+          user: true,
+          jokeTopics: {
+            include: {
+              topic: true,
+            },
+          },
+        },
+        where: {},
+      });
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(mockPrismaJoke.id);
+    });
+
+    it('should filter jokes by userName', async () => {
+      (prisma.joke.findMany as jest.Mock).mockResolvedValue([mockPrismaJoke]);
+
+      const result = await repository.getJokes('manolito');
+
+      expect(prisma.joke.findMany).toHaveBeenCalledWith({
+        include: {
+          user: true,
+          jokeTopics: {
+            include: {
+              topic: true,
+            },
+          },
+        },
+        where: {
+          user: {
+            name: 'manolito',
+          },
+        },
+      });
+      expect(result).toHaveLength(1);
+    });
+
+    it('should filter jokes by topicName', async () => {
+      (prisma.joke.findMany as jest.Mock).mockResolvedValue([mockPrismaJoke]);
+
+      const result = await repository.getJokes(undefined, 'humor negro');
+
+      expect(prisma.joke.findMany).toHaveBeenCalledWith({
+        include: {
+          user: true,
+          jokeTopics: {
+            include: {
+              topic: true,
+            },
+          },
+        },
+        where: {
+          jokeTopics: {
+            some: {
+              topic: {
+                name: 'humor negro',
+              },
+            },
+          },
+        },
+      });
+      expect(result).toHaveLength(1);
+    });
+
+    it('should filter jokes by both userName and topicName', async () => {
+      (prisma.joke.findMany as jest.Mock).mockResolvedValue([mockPrismaJoke]);
+
+      const result = await repository.getJokes('manolito', 'humor negro');
+
+      expect(prisma.joke.findMany).toHaveBeenCalledWith({
+        include: {
+          user: true,
+          jokeTopics: {
+            include: {
+              topic: true,
+            },
+          },
+        },
+        where: {
+          user: {
+            name: 'manolito',
+          },
+          jokeTopics: {
+            some: {
+              topic: {
+                name: 'humor negro',
+              },
+            },
+          },
+        },
+      });
+      expect(result).toHaveLength(1);
+    });
+
+    it('should return empty array when no jokes found', async () => {
+      (prisma.joke.findMany as jest.Mock).mockResolvedValue([]);
+
+      const result = await repository.getJokes('nonexistent');
+
+      expect(result).toHaveLength(0);
+    });
+  });
 });

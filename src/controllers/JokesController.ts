@@ -113,4 +113,8 @@ export class JokesController {
       message: 'Joke deleted successfully',
     });
   }
+
+  async getJokes(_req: Request, res: Response): Promise<void> {
+    res.status(500).json({ success: false });
+  }
 }

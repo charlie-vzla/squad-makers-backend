@@ -222,4 +222,75 @@ describe('JokesController', () => {
       );
     });
   });
+
+  describe('getJokes', () => {
+    it('should return all jokes when no filters provided', async () => {
+      const mockRequest = {
+        query: {},
+      } as unknown as Request;
+
+      await controller.getJokes(mockRequest, mockResponse as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(200);
+      expect(jsonMock).toHaveBeenCalledWith({
+        success: true,
+        data: [mockJokeDTO],
+      });
+    });
+
+    it('should filter jokes by userName', async () => {
+      const mockRequest = {
+        query: { userName: 'Manolito' },
+      } as unknown as Request;
+
+      await controller.getJokes(mockRequest, mockResponse as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(200);
+    });
+
+    it('should filter jokes by topicName', async () => {
+      const mockRequest = {
+        query: { topicName: 'humor negro' },
+      } as unknown as Request;
+
+      await controller.getJokes(mockRequest, mockResponse as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(200);
+    });
+
+    it('should filter jokes by both userName and topicName', async () => {
+      const mockRequest = {
+        query: { userName: 'Manolito', topicName: 'humor negro' },
+      } as unknown as Request;
+
+      await controller.getJokes(mockRequest, mockResponse as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(200);
+    });
+
+    it('should return empty array when no jokes found', async () => {
+      const mockRequest = {
+        query: { userName: 'NonExistent' },
+      } as unknown as Request;
+
+      await controller.getJokes(mockRequest, mockResponse as Response);
+
+      expect(jsonMock).toHaveBeenCalledWith({
+        success: true,
+        data: [],
+      });
+    });
+
+    it('should throw error when service fails', async () => {
+      const mockRequest = {
+        query: {},
+      } as unknown as Request;
+
+      await expect(controller.getJokes(mockRequest, mockResponse as Response)).rejects.toThrow(
+        'Service error'
+      );
+
+      expect(statusMock).toHaveBeenCalledWith(500);
+    });
+  });
 });
