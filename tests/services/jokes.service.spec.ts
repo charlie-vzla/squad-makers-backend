@@ -1,6 +1,5 @@
 import axios from 'axios';
 import JokesService from '../../src/services/JokesService';
-import JokesRepository from '../../src/repositories/JokesRepository';
 import { mockCreatedPrismaJoke, mockPrismaJoke } from '../__mocks__/db/jokes/jokes.mock';
 import {
   mockChuckNorrisApiResponse,
@@ -13,14 +12,19 @@ jest.mock('axios');
 
 const mockGetRandomJoke = jest.fn();
 const mockCreateJoke = jest.fn();
+const mockDeleteJoke = jest.fn();
+
+const mockRepository = {
+  getRandomJoke: mockGetRandomJoke,
+  createJoke: mockCreateJoke,
+  deleteJoke: mockDeleteJoke,
+};
+
 jest.mock('../../src/repositories/JokesRepository', () => ({
   __esModule: true,
   default: class {
     static getInstance() {
-      return {
-        getRandomJoke: mockGetRandomJoke,
-        createJoke: mockCreateJoke,
-      };
+      return mockRepository;
     }
   },
 }));
@@ -130,12 +134,7 @@ describe('JokesService', () => {
 
   describe('deleteJoke', () => {
     it('should delete a joke by number', async () => {
-      const mockDeleteJoke = jest.fn().mockResolvedValueOnce(true);
-      (JokesRepository.getInstance as jest.Mock).mockReturnValue({
-        getRandomJoke: jest.fn(),
-        createJoke: jest.fn(),
-        deleteJoke: mockDeleteJoke,
-      });
+      mockDeleteJoke.mockResolvedValueOnce(true)
 
       const result = await service.deleteJoke(1);
 
@@ -144,12 +143,7 @@ describe('JokesService', () => {
     });
 
     it('should return false when joke not found', async () => {
-      const mockDeleteJoke = jest.fn().mockResolvedValueOnce(false);
-      (JokesRepository.getInstance as jest.Mock).mockReturnValue({
-        getRandomJoke: jest.fn(),
-        createJoke: jest.fn(),
-        deleteJoke: mockDeleteJoke,
-      });
+      mockDeleteJoke.mockResolvedValueOnce(false);
 
       const result = await service.deleteJoke(999);
 
@@ -158,12 +152,7 @@ describe('JokesService', () => {
     });
 
     it('should throw error when repository fails', async () => {
-      const mockDeleteJoke = jest.fn().mockRejectedValueOnce(new Error('Database error'));
-      (JokesRepository.getInstance as jest.Mock).mockReturnValue({
-        getRandomJoke: jest.fn(),
-        createJoke: jest.fn(),
-        deleteJoke: mockDeleteJoke,
-      });
+      mockDeleteJoke.mockRejectedValueOnce(new Error('Database error'));
 
       await expect(service.deleteJoke(1)).rejects.toThrow('Database error');
     });

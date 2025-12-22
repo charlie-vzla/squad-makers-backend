@@ -12,5 +12,10 @@ export const jokeSourceSchema = z.object({
   }),
 });
 
+export const jokeNumberSchema = z.object({
+  number: z.string().regex(/^\d+$/, 'Number must be a valid positive integer').transform(Number),
+});
+
 export type CreateJokeInput = z.infer<typeof createJokeSchema>;
 export type JokeSourceParams = z.infer<typeof jokeSourceSchema>;
+export type JokeNumberParams = z.infer<typeof jokeNumberSchema>;

@@ -88,7 +88,29 @@ export class JokesController {
     });
   }
 
-  async deleteJoke(_req: Request, res: Response): Promise<void> {
-    res.status(500).json({ success: false });
+  /**
+   * Handles DELETE /api/jokes/:number request to delete a joke.
+   * @param {Request} req - Express request object with number parameter
+   * @param {Response} res - Express response object
+   * @returns {Promise<void>}
+   */
+  async deleteJoke(req: Request, res: Response): Promise<void> {
+    const number = Number.parseInt(req.params.number, 10);
+
+    const deleted = await this.service.deleteJoke(number);
+
+    if (!deleted) {
+      res.status(404).json({
+        success: false,
+        message: 'Joke not found',
+      });
+
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Joke deleted successfully',
+    });
   }
 }

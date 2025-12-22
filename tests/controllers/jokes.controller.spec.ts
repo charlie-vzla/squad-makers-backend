@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
 import { mockChuckNorrisJoke, mockDadJoke, mockJokeDTO, mockCreatedJokeDTO } from '../__mocks__/models/jokes/jokes.mock';
 import { JokesController } from '../../src/controllers/JokesController';
-import JokesService from '../../src/services/JokesService';
 
 const mockGetRandomJoke = jest.fn();
 const mockGetChuckNorrisJoke = jest.fn();
 const mockGetDadJoke = jest.fn();
 const mockCreateJoke = jest.fn();
+const mockDeleteJoke = jest.fn();
 
 jest.mock('../../src/services/JokesService', () => ({
   __esModule: true,
@@ -17,6 +17,7 @@ jest.mock('../../src/services/JokesService', () => ({
         getChuckNorrisJoke: mockGetChuckNorrisJoke,
         getDadJoke: mockGetDadJoke,
         createJoke: mockCreateJoke,
+        deleteJoke: mockDeleteJoke,
       };
     }
   },
@@ -180,13 +181,7 @@ describe('JokesController', () => {
         params: { number: '1' },
       } as unknown as Request;
 
-      const mockDeleteJoke = jest.fn().mockResolvedValueOnce(true);
-      (JokesService.getInstance as jest.Mock).mockReturnValue({
-        getRandomJoke: jest.fn(),
-        getJoke: jest.fn(),
-        createJoke: jest.fn(),
-        deleteJoke: mockDeleteJoke,
-      });
+      mockDeleteJoke.mockResolvedValueOnce(true);
 
       await controller.deleteJoke(mockRequest, mockResponse as Response);
 
@@ -203,13 +198,7 @@ describe('JokesController', () => {
         params: { number: '999' },
       } as unknown as Request;
 
-      const mockDeleteJoke = jest.fn().mockResolvedValueOnce(false);
-      (JokesService.getInstance as jest.Mock).mockReturnValue({
-        getRandomJoke: jest.fn(),
-        getJoke: jest.fn(),
-        createJoke: jest.fn(),
-        deleteJoke: mockDeleteJoke,
-      });
+      mockDeleteJoke.mockResolvedValueOnce(false);
 
       await controller.deleteJoke(mockRequest, mockResponse as Response);
 
@@ -226,13 +215,7 @@ describe('JokesController', () => {
         params: { number: '1' },
       } as unknown as Request;
 
-      const mockDeleteJoke = jest.fn().mockRejectedValueOnce(new Error('Service error'));
-      (JokesService.getInstance as jest.Mock).mockReturnValue({
-        getRandomJoke: jest.fn(),
-        getJoke: jest.fn(),
-        createJoke: jest.fn(),
-        deleteJoke: mockDeleteJoke,
-      });
+      mockDeleteJoke.mockRejectedValueOnce(new Error('Service error'));
 
       await expect(controller.deleteJoke(mockRequest, mockResponse as Response)).rejects.toThrow(
         'Service error'

@@ -109,7 +109,24 @@ export default class JokesRepository {
     return joke;
   }
 
-  async deleteJoke(_number: number): Promise<boolean> {
-    return false;
+  /**
+   * Deletes a joke by its number.
+   * @param {number} number - The joke number to delete
+   * @returns {Promise<boolean>} True if joke was deleted, false if not found
+   */
+  async deleteJoke(number: number): Promise<boolean> {
+    const joke = await prisma.joke.findUnique({
+      where: { number },
+    });
+
+    if (!joke) {
+      return false;
+    }
+
+    await prisma.joke.delete({
+      where: { id: joke.id },
+    });
+
+    return true;
   }
 }

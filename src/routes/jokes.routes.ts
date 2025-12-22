@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { JokesController } from '../controllers/JokesController';
 import { validateRequest, validateParams } from '../middleware/validateRequest';
-import { createJokeSchema, jokeSourceSchema } from '../validators/jokes.validator';
+import { createJokeSchema, jokeSourceSchema, jokeNumberSchema } from '../validators/jokes.validator';
 
 const router = Router();
 const jokesController = JokesController.getInstance();
@@ -157,6 +157,60 @@ router.get('/:source', validateParams(jokeSourceSchema), (req, res, next) => {
  */
 router.post('/', validateRequest(createJokeSchema), (req, res, next) => {
   jokesController.createJoke(req, res).catch(next);
+});
+
+/**
+ * @swagger
+ * /api/jokes/{number}:
+ *   delete:
+ *     summary: Delete a joke by number
+ *     description: Removes a joke from the database by its number
+ *     tags: [Jokes]
+ *     parameters:
+ *       - in: path
+ *         name: number
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: The joke number to delete
+ *         example: 42
+ *     responses:
+ *       200:
+ *         description: Joke deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Joke deleted successfully
+ *       404:
+ *         description: Joke not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Joke not found
+ *       400:
+ *         description: Invalid number parameter
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.delete('/:number', validateParams(jokeNumberSchema), (req, res, next) => {
+  jokesController.deleteJoke(req, res).catch(next);
 });
 
 export default router;
