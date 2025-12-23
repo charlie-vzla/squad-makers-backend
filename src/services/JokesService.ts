@@ -9,6 +9,7 @@ import {
   JokeMapper
 } from '../models/Joke.model';
 import JokesRepository from '../repositories/JokesRepository';
+import ElasticsearchService from './ElasticsearchService';
 
 /**
  * Semantic bridge categories for joke combination
@@ -48,12 +49,14 @@ export default class JokesService {
   private static instance: JokesService;
 
   private readonly repository: JokesRepository;
+  private readonly esService: ElasticsearchService;
 
   /**
    * Private constructor to enforce Singleton pattern.
    */
   private constructor() {
     this.repository = JokesRepository.getInstance();
+    this.esService = ElasticsearchService.getInstance();
   }
 
   /**
@@ -88,15 +91,24 @@ export default class JokesService {
   }
 
   /**
-   * Fetches a random Chuck Norris joke from the external API.
+   * Fetches a random Chuck Norris joke from the external API and indexes it in Elasticsearch.
    * @returns {Promise<string>} The joke text from Chuck Norris API
    * @throws {Error} If the API request fails
    */
   async getChuckNorrisJoke(): Promise<string> {
     try {
       const response: AxiosResponse<ChuckJokeResponseInterface> = await axios.get(`${env.CHUCK_NORRIS_API_URL}/jokes/random`);
+      const jokeText = response.data.value;
 
-      return response.data.value;
+      const jokeId = `external-chuck-${Date.now()}`;
+      this.esService.indexJoke(jokeId, {
+        text: jokeText,
+        source: 'Chuck',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }).catch(err => logger.error('Failed to index Chuck joke in Elasticsearch:', err));
+
+      return jokeText;
     } catch (error) {
       logger.error('Error fetching Chuck Norris joke:', error);
       throw error;
@@ -104,7 +116,7 @@ export default class JokesService {
   }
 
   /**
-   * Fetches a random Dad joke from the external API.
+   * Fetches a random Dad joke from the external API and indexes it in Elasticsearch.
    * @returns {Promise<string>} The joke text from Dad Jokes API
    * @throws {Error} If the API request fails
    */
@@ -115,8 +127,17 @@ export default class JokesService {
           Accept: 'application/json',
         },
       });
+      const jokeText = response.data.joke;
 
-      return response.data.joke;
+      const jokeId = `external-dad-${Date.now()}`;
+      this.esService.indexJoke(jokeId, {
+        text: jokeText,
+        source: 'Dad',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }).catch(err => logger.error('Failed to index Dad joke in Elasticsearch:', err));
+
+      return jokeText;
     } catch (error) {
       logger.error('Error fetching Dad joke:', error);
       throw error;
@@ -175,6 +196,21 @@ export default class JokesService {
   }
 
   /**
+   * Searches jokes using Elasticsearch full-text search.
+   * @param {string} query - Search query
+   * @param {number} [limit=10] - Maximum number of results
+   * @returns {Promise<any[]>} Array of search results with relevance scores
+   * @throws {Error} If Elasticsearch search fails
+   */
+  async searchJokes(query: string, limit: number = 10): Promise<any[]> {
+    const results = await this.esService.searchJokes(query, limit);
+
+    logger.info(`Search for "${query}" returned ${results.length} results`);
+
+    return results;
+  }
+
+  /**
    * Fetches and pairs jokes from Chuck Norris and Dad Jokes APIs.
    * Makes 5 requests to each API in parallel and pairs them 1-to-1.
    * @returns {Promise<Array<{ chuck: string; dad: string; combinado: string }>>} Array of paired jokes
@@ -182,7 +218,7 @@ export default class JokesService {
    */
   async getPairedJokes(): Promise<Array<{ chuck: string; dad: string; combinado: string }>> {
     try {
-      const chuckPromises = Array(5)
+      const chuckPromises = new Array(5)
         .fill(null)
         .map(() =>
           axios
@@ -191,7 +227,7 @@ export default class JokesService {
             .catch(() => null)
         );
 
-      const dadPromises = Array(5)
+      const dadPromises = new Array(5)
         .fill(null)
         .map(() =>
           axios

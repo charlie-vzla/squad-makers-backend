@@ -156,4 +156,19 @@ export class JokesController {
       throw error;
     }
   }
+
+  /**
+   * Searches jokes using Elasticsearch full-text search.
+   * @param {Request} req - Express request object with query params
+   * @param {Response} res - Express response object
+   */
+  async searchJokes(req: Request, res: Response): Promise<void> {
+    const { q, limit } = req.query;
+    const results = await this.service.searchJokes(q as string, limit ? Number(limit) : 10);
+
+    res.status(200).json({
+      success: true,
+      data: results,
+    });
+  }
 }

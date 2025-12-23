@@ -1,6 +1,6 @@
 # Backend Test API
 
-A production-ready REST API built with Node.js, Express, TypeScript, PostgreSQL, and Elasticsearch for managing jokes with external API integration and mathematical operations.
+A production-ready REST API built with Node.js, Express, TypeScript, PostgreSQL, and Elasticsearch for managing jokes with external API integration, full-text search, and mathematical operations.
 
 ## 🚀 Tech Stack
 
@@ -8,12 +8,13 @@ A production-ready REST API built with Node.js, Express, TypeScript, PostgreSQL,
 - **Framework**: Express.js
 - **Language**: TypeScript
 - **Database**: PostgreSQL (via Prisma ORM)
-- **Search Engine**: Elasticsearch
-- **Testing**: Jest (Unit Tests with TDD)
+- **Search Engine**: Elasticsearch (Full-text search with automatic indexing)
+- **NLP**: Compromise.js (Natural language processing for joke combinations)
+- **Testing**: Jest (Unit Tests with TDD - 88 tests)
 - **Documentation**: Swagger/OpenAPI
 - **Logging**: Winston (Console + Elasticsearch)
 - **HTTP Client**: Axios
-- **Validation**: Zod
+- **Validation**: Zod (Request validation with transformations)
 - **Code Quality**: ESLint + Prettier
 - **Containerization**: Docker + Docker Compose
 
@@ -66,69 +67,75 @@ DAD_JOKE_API_URL=https://icanhazdadjoke.com
 
 ## 🐳 Running with Docker (Recommended)
 
-### Start all services
+### First Time Setup
+
+If this is your **first time** running the project:
 
 ```bash
+# 1. Start all services (Postgres, Elasticsearch, App)
 npm run docker:up
+
+# 2. Wait ~15 seconds for services to be healthy, then run migrations
+docker compose exec app npx prisma migrate deploy
+
+# 3. Seed the database with initial data
+docker compose exec app npx prisma db seed
+
+# 4. Check if everything is running
+curl http://localhost:3000/api/health
 ```
 
-This will start:
-- PostgreSQL on port 5432
-- Elasticsearch on port 9200
-- Node.js application on port 3000
+This will create:
+- **4 users**: Manolito, Pepe, Isabel, Pedro
+- **3 topics**: humor negro, humor amarillo, chistes verdes
+- **36 jokes**: 3 jokes per topic per user
 
-### View logs
+### Regular Usage
 
 ```bash
+# Start services (if already configured)
+npm run docker:up
+
+# View application logs
 npm run docker:logs
-```
 
-### Stop services
-
-```bash
+# Stop services
 npm run docker:down
-```
 
-### Rebuild containers
-
-```bash
+# Rebuild containers (after dependency changes)
 npm run docker:rebuild
 ```
 
-## 🏃 Running Locally (Without Docker)
+### What Gets Started
 
-### 1. Start PostgreSQL and Elasticsearch
+- **PostgreSQL**: Port 5432 (Database)
+- **Elasticsearch**: Port 9200 (Search engine + Logs)
+- **Node.js App**: Port 3000 (API Server)
 
-Make sure PostgreSQL and Elasticsearch are running locally or via Docker:
+## 💻 Running Locally (Without Docker)
+
+If you prefer to run the app locally without Docker:
+
+### 1. Start dependencies with Docker
 
 ```bash
 docker compose up -d postgres elasticsearch
 ```
 
-### 2. Run Prisma migrations
+### 2. Install dependencies
 
 ```bash
-npm run prisma:migrate
+npm install
 ```
 
-### 3. Generate Prisma Client
+### 3. Run migrations (first time only)
 
 ```bash
-npm run prisma:generate
-```
-
-### 4. Seed the database
-
-```bash
+npm run prisma:migrate:deploy
 npm run prisma:seed
 ```
 
-This will create:
-- 4 users: Manolito, Pepe, Isabel, Pedro
-- 3 topics: humor negro, humor amarillo, chistes verdes
-- 36 jokes (3 jokes per topic per user)
-
-### 5. Start the development server
+### 4. Start the development server
 
 ```bash
 npm run dev
@@ -177,36 +184,49 @@ backend-test/
 │   ├── schema.prisma          # Database schema
 │   └── seed.ts                # Database seed script
 ├── src/
-│   ├── __tests__/
-│   │   ├── setup.ts           # Jest setup and mocks
-│   │   └── unit/              # Unit tests
 │   ├── config/
 │   │   ├── database.ts        # Prisma configuration
-│   │   ├── elasticsearch.ts   # Elasticsearch client
-│   │   ├── env.ts             # Environment validation
-│   │   ├── logger.ts          # Winston logger setup
+│   │   ├── elasticsearch.ts   # Elasticsearch client & index setup
+│   │   ├── env.ts             # Environment validation (Zod)
+│   │   ├── logger.ts          # Winston logger
 │   │   └── swagger.ts         # Swagger configuration
-│   ├── controllers/
-│   │   └── healthController.ts
+│   ├── controllers/           # HTTP request handlers (Singleton)
+│   │   ├── HealthController.ts
+│   │   ├── JokesController.ts
+│   │   └── MathController.ts
+│   ├── services/              # Business logic (Singleton)
+│   │   ├── JokesService.ts
+│   │   ├── MathService.ts
+│   │   └── ElasticsearchService.ts
+│   ├── repositories/          # Data access layer (Singleton)
+│   │   └── JokesRepository.ts
+│   ├── models/                # DTOs and mappers
+│   │   └── Joke.model.ts
+│   ├── validators/            # Zod schemas for request validation
+│   │   ├── jokes.validator.ts
+│   │   ├── math.validator.ts
+│   │   └── search.validator.ts
+│   ├── routes/                # Route definitions with Swagger docs
+│   │   ├── index.ts
+│   │   ├── health.routes.ts
+│   │   ├── jokes.routes.ts
+│   │   └── math.routes.ts
 │   ├── middleware/
-│   │   ├── errorHandler.ts    # Global error handling
-│   │   └── requestLogger.ts   # HTTP request logging
-│   ├── repositories/          # Data access layer
-│   ├── routes/
-│   │   └── index.ts           # Route definitions
-│   ├── services/              # Business logic
-│   ├── types/
-│   │   └── index.ts           # TypeScript types
-│   ├── utils/                 # Utility functions
+│   │   ├── errorHandler.ts   # Global error handling
+│   │   ├── requestLogger.ts  # HTTP request logging
+│   │   └── validateRequest.ts # Zod validation middleware
 │   ├── app.ts                 # Express app setup
 │   └── server.ts              # Server entry point
+├── tests/                     # Unit tests (outside src/)
+│   ├── setup.ts               # Jest configuration
+│   ├── controllers/           # Controller tests
+│   ├── services/              # Service tests
+│   └── repositories/          # Repository tests
 ├── docker-compose.yml
+├── docker-entrypoint.sh       # Container startup script
 ├── Dockerfile
 ├── jest.config.js
-├── tsconfig.json
-├── .eslintrc.json
-├── .prettierrc.json
-└── package.json
+└── tsconfig.json
 ```
 
 ## 🔧 Available Scripts
@@ -255,36 +275,82 @@ backend-test/
 
 ## 📊 Elasticsearch Integration
 
-Elasticsearch is used for:
+Elasticsearch powers two key features:
 
-1. **Application Logs**: Centralized logging with Winston
-   - Accessible via Elasticsearch queries
-   - Index: `logs`
+### 1. **Application Logs**
+- Centralized logging with Winston
+- All application events indexed automatically
+- Index: `logs`
 
-2. **Jokes Search** (prepared for implementation):
-   - Full-text search on joke content
-   - Filter by source, user, topics
-   - Index: `jokes`
+### 2. **Jokes Full-Text Search** ✨
+- **Automatic indexing**: Every joke (DB + external APIs) is indexed automatically
+- **Fuzzy matching**: Handles typos ("Chuk Norris" finds "Chuck Norris")
+- **Multi-field search**: Searches across text, userName, and topics
+- **Relevance scoring**: Best matches ranked first
+- **Index**: `jokes`
 
-## 🔍 API Endpoints (To Be Implemented)
+#### How It Works:
+```bash
+# Jokes are indexed automatically when:
+# 1. Fetched from Chuck Norris API
+GET /api/jokes/Chuck
+
+# 2. Fetched from Dad Jokes API
+GET /api/jokes/Dad
+
+# 3. Created via POST endpoint
+POST /api/jokes
+
+# Then search them all:
+GET /api/jokes/search?q=Chuck%20Norris&limit=10
+```
+
+## 🔍 API Endpoints
+
+Complete API documentation available at: **http://localhost:3000/api-docs**
+
+### Health Check
+- `GET /api/health` - Check API, database, and Elasticsearch status
 
 ### Jokes Endpoints
 
-- `GET /api/jokes/:type?` - Get random joke (Chuck/Dad/random)
-- `POST /api/jokes` - Create a new joke
-- `PUT /api/jokes/:number` - Update a joke by number
-- `DELETE /api/jokes/:number` - Delete a joke by number
-- `GET /api/jokes/user/:userId` - Get jokes by user
-- `GET /api/jokes/topic/:topicName` - Get jokes by topic
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/jokes` | Get random joke from database |
+| `GET` | `/api/jokes/:source` | Get joke from external API (Chuck/Dad) |
+| `GET` | `/api/jokes/list` | List jokes with filters (userName, topicName) |
+| `GET` | `/api/jokes/search` | **Full-text search** with Elasticsearch |
+| `GET` | `/api/jokes/paired` | Get 5 paired Chuck + Dad jokes with NLP combination |
+| `POST` | `/api/jokes` | Create a new joke |
+| `DELETE` | `/api/jokes/:number` | Delete a joke by number |
 
 ### Math Endpoints
 
-- `GET /api/math/lcm?numbers=[]` - Calculate LCM of numbers
-- `GET /api/math/increment?number=X` - Increment number by 1
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/math/lcm?numbers=1,2,3` | Calculate Least Common Multiple |
+| `GET` | `/api/math/increment?number=5` | Increment number by 1 |
 
-### Paired Jokes Endpoint
+### Example Requests
 
-- `GET /api/jokes/paired` - Get 5 paired Chuck + Dad jokes
+```bash
+# Get Chuck Norris joke
+curl http://localhost:3000/api/jokes/Chuck
+
+# Search jokes
+curl "http://localhost:3000/api/jokes/search?q=divide&limit=5"
+
+# Create a joke
+curl -X POST http://localhost:3000/api/jokes \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Why did the developer quit?", "userName": "Pedro", "topicName": "chistes verdes"}'
+
+# Get paired jokes with NLP combination
+curl http://localhost:3000/api/jokes/paired
+
+# Calculate LCM
+curl "http://localhost:3000/api/math/lcm?numbers=12,18,24"
+```
 
 ## 🐛 Troubleshooting
 
@@ -320,39 +386,76 @@ sudo sysctl -w vm.max_map_count=262144
 
 ## 📝 Development Guidelines
 
+### Architecture Patterns
+
+- **Layered Architecture**: Controller → Service → Repository
+- **Singleton Pattern**: All controllers, services, and repositories use singletons
+- **OOP**: Classes with private constructors and static getInstance()
+- **Dependency Injection**: Services receive repository instances
+- **DTOs**: Separate domain models from API responses
+
+### Testing Strategy (TDD)
+
+- **88 Unit Tests**: All business logic covered
+- **Mocked Dependencies**: Prisma, Elasticsearch, Axios, Winston
+- **Test Location**: `tests/` folder (outside `src/`)
+- **Naming Convention**: `{domain}.{layer}.spec.ts`
+- **RED-GREEN-REFACTOR**: Write failing tests first
+
 ### Adding New Endpoints
 
-1. Create controller in `src/controllers/`
-2. Create service in `src/services/`
-3. Create repository in `src/repositories/` (if needed)
-4. Add routes in `src/routes/`
-5. Add Swagger documentation with JSDoc
-6. Write unit tests in `src/__tests__/unit/`
+1. **Write Tests First** (RED step)
+   ```bash
+   # tests/services/my-feature.service.spec.ts
+   ```
 
-### Testing Strategy
+2. **Create Service** (GREEN step)
+   ```typescript
+   // src/services/MyFeatureService.ts
+   class MyFeatureService {
+     private static instance: MyFeatureService;
+     static getInstance() { ... }
+   }
+   ```
 
-- **Unit Tests Only**: All external dependencies are mocked
-- Mock Prisma, Elasticsearch, and external APIs
-- Test business logic in services
-- Test request/response handling in controllers
-- Aim for 80%+ code coverage
+3. **Create Controller**
+   ```typescript
+   // src/controllers/MyFeatureController.ts
+   ```
 
-### Code Style
+4. **Create Validator**
+   ```typescript
+   // src/validators/my-feature.validator.ts (Zod schema)
+   ```
 
-- Use ESLint and Prettier (configured)
-- Follow TypeScript best practices
-- Use async/await over callbacks
-- Handle errors properly with try/catch
-- Log important operations
+5. **Add Routes with Swagger**
+   ```typescript
+   // src/routes/my-feature.routes.ts
+   ```
+
+6. **Run Tests**
+   ```bash
+   npm test
+   ```
+
+## ✨ Key Features Implemented
+
+✅ **Full CRUD for Jokes** with PostgreSQL
+✅ **External API Integration** (Chuck Norris + Dad Jokes)
+✅ **Elasticsearch Full-Text Search** with automatic indexing
+✅ **NLP-Powered Joke Combinations** using Compromise.js
+✅ **Mathematical Operations** (LCM, Increment)
+✅ **Request Validation** with Zod (including transformations)
+✅ **Comprehensive Testing** (88 unit tests, TDD approach)
+✅ **API Documentation** with Swagger/OpenAPI
+✅ **Centralized Logging** with Winston + Elasticsearch
+✅ **Docker Support** for easy deployment
+✅ **Type Safety** with TypeScript throughout
 
 ## 📄 License
 
 ISC
 
-## 👥 Authors
-
-Backend Test Team
-
 ---
 
-**Ready to start implementing the endpoints!** 🎉
+**All features implemented and tested!** 🎉

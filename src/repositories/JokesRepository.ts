@@ -1,5 +1,7 @@
 import prisma from '../config/database';
 import { JokeWithRelations } from '../models/Joke.model';
+import ElasticsearchService from '../services/ElasticsearchService';
+import logger from '../config/logger';
 
 /**
  * Repository layer for handling joke-related database operations.
@@ -11,10 +13,14 @@ export default class JokesRepository {
   private readonly DEFAULT_USER_NAME = 'Pedro';
   private readonly DEFAULT_TOPIC_NAME = 'chistes verdes';
 
+  private readonly esService: ElasticsearchService;
+
   /**
    * Private constructor to enforce Singleton pattern.
    */
-  private constructor() {}
+  private constructor() {
+    this.esService = ElasticsearchService.getInstance();
+  }
 
   /**
    * Gets the singleton instance of JokesRepository.
@@ -54,6 +60,28 @@ export default class JokesRepository {
     });
 
     return jokes[0];
+  }
+
+  /**
+   * Indexes a joke in Elasticsearch.
+   * @param {JokeWithRelations} joke - The joke to index
+   * @returns {Promise<void>}
+   */
+  private async indexJoke(joke: JokeWithRelations): Promise<void> {
+    try {
+      await this.esService.indexJoke(joke.id, {
+        text: joke.text,
+        source: joke.source || 'custom',
+        userId: joke.userId,
+        userName: joke.user.name,
+        topics: joke.jokeTopics.map(jt => jt.topic.name),
+        number: joke.number,
+        createdAt: joke.createdAt,
+        updatedAt: joke.updatedAt,
+      });
+    } catch (err) {
+      logger.error('Failed to index joke in Elasticsearch:', err);
+    }
   }
 
   /**
@@ -106,6 +134,22 @@ export default class JokesRepository {
       },
     });
 
+    const jokeWithTopics = await prisma.joke.findUnique({
+      where: { id: joke.id },
+      include: {
+        user: true,
+        jokeTopics: {
+          include: {
+            topic: true,
+          },
+        },
+      },
+    });
+
+    if (jokeWithTopics) {
+      await this.indexJoke(jokeWithTopics);
+    }
+
     return joke;
   }
 
@@ -126,6 +170,11 @@ export default class JokesRepository {
     await prisma.joke.delete({
       where: { id: joke.id },
     });
+
+    const esService = ElasticsearchService.getInstance();
+    esService.deleteJoke(joke.id).catch(err =>
+      logger.error('Failed to delete joke from Elasticsearch:', err)
+    );
 
     return true;
   }
