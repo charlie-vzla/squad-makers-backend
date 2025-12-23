@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { JokesController } from '../controllers/JokesController';
 import { validateRequest, validateParams, validateQuery } from '../middleware/validateRequest';
 import { createJokeSchema, jokeSourceSchema, jokeNumberSchema, getJokesQuerySchema } from '../validators/jokes.validator';
+import { searchQuerySchema } from '../validators/search.validator';
 
 const router = Router();
 const jokesController = JokesController.getInstance();
@@ -39,6 +40,68 @@ const jokesController = JokesController.getInstance();
  */
 router.get('/', (req, res, next) => {
   jokesController.getRandomJoke(req, res).catch(next);
+});
+
+/**
+ * @swagger
+ * /api/jokes/search:
+ *   get:
+ *     summary: Search jokes using Elasticsearch
+ *     description: Full-text search across all indexed jokes with fuzzy matching and relevance scoring
+ *     tags: [Jokes]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Search query
+ *         example: "Chuck Norris"
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Maximum number of results
+ *     responses:
+ *       200:
+ *         description: Search results retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       score:
+ *                         type: number
+ *                       text:
+ *                         type: string
+ *                       source:
+ *                         type: string
+ *                       userName:
+ *                         type: string
+ *                       topics:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *       400:
+ *         description: Invalid query parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/search', validateQuery(searchQuerySchema), (req, res, next) => {
+  jokesController.searchJokes(req, res).catch(next);
 });
 
 /**
